@@ -71,3 +71,135 @@ def purge_dummies():
         recs = crsr.fetchall()
         for i in recs:
             print(i)
+def add_new(n):
+    if n == 1:
+        car_id = int(input("Enter car ID: "))
+        make = input("Enter make: ")
+        model = input("Enter model: ")
+        year = int(input("Enter year: "))
+        cost_price = float(input("Enter cost price: "))
+        selling_price = float(input("Enter selling price: "))
+        available_qty = int(input("Enter available quantity: "))
+
+        crsr.execute("INSERT INTO Inventory (car_id, make, model, year, cost_price, selling_price, available_qty) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                     (car_id, make, model, year, cost_price, selling_price, available_qty))
+
+    elif n == 2:
+        emp_id = int(input("Enter employee ID: "))
+        name = input("Enter name: ")
+        passkey = input("Enter passkey: ")
+        role = input("Enter role: ")
+        phone = input("Enter phone: ")
+        salary = float(input("Enter salary: "))
+        experience = float(input("Enter experience: "))
+
+        crsr.execute("INSERT INTO Staff (emp_id, name, passkey, role, phone, salary, experience) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                     (emp_id, name, passkey, role, phone, salary, experience))
+
+    elif n == 3:
+        cust_id = int(input("Enter customer ID: "))
+        name = input("Enter name: ")
+        phone = input("Enter phone: ")
+        email = input("Enter email: ")
+        address = input("Enter address: ")
+
+        crsr.execute("INSERT INTO Customers (cust_id, name, phone, email, address) VALUES (%s,%s,%s,%s,%s)",
+                     (cust_id, name, phone, email, address))
+
+    else:
+        print("Invalid option.")
+        return
+
+    db.commit()
+    print("Record added successfully.")
+
+
+def delete(n):
+    if n == 1:
+        car_id = int(input("Enter car ID to delete: "))
+        crsr.execute("DELETE FROM Inventory WHERE car_id = %s", (car_id,))
+
+    elif n == 2:
+        emp_id = int(input("Enter employee ID to delete: "))
+        crsr.execute("DELETE FROM Staff WHERE emp_id = %s", (emp_id,))
+
+    elif n == 3:
+        cust_id = int(input("Enter customer ID to delete: "))
+        crsr.execute("DELETE FROM Customers WHERE cust_id = %s", (cust_id,))
+
+    elif n == 4:
+        txn_id = int(input("Enter transaction ID to delete: "))
+        crsr.execute("DELETE FROM Transactions WHERE txn_id = %s", (txn_id,))
+
+    else:
+        print("Invalid option.")
+        return
+
+    db.commit()
+
+    if crsr.rowcount > 0:
+        print("Record deleted successfully.")
+    else:
+        print("Record not found.")
+
+
+def edit(n):
+    if n == 1:
+        car_id = int(input("Enter car ID to edit: "))
+        make = input("Enter new make: ")
+        model = input("Enter new model: ")
+        year = int(input("Enter new year: "))
+        cost_price = float(input("Enter new cost price: "))
+        selling_price = float(input("Enter new selling price: "))
+        available_qty = int(input("Enter new available quantity: "))
+        reserved_qty = int(input("Enter new reserved quantity: "))
+        sold_qty = int(input("Enter new sold quantity: "))
+
+        crsr.execute("UPDATE Inventory SET make=%s, model=%s, year=%s, cost_price=%s, selling_price=%s, available_qty=%s, reserved_qty=%s, sold_qty=%s WHERE car_id=%s",
+                     (make, model, year, cost_price, selling_price, available_qty, reserved_qty, sold_qty, car_id))
+
+    elif n == 2:
+        emp_id = int(input("Enter employee ID to edit: "))
+        name = input("Enter new name: ")
+        passkey = input("Enter new passkey: ")
+        role = input("Enter new role: ")
+        phone = input("Enter new phone: ")
+        salary = float(input("Enter new salary: "))
+        experience = float(input("Enter new experience: "))
+
+        crsr.execute("UPDATE Staff SET name=%s, passkey=%s, role=%s, phone=%s, salary=%s, experience=%s WHERE emp_id=%s",
+                     (name, passkey, role, phone, salary, experience, emp_id))
+
+    elif n == 3:
+        cust_id = int(input("Enter customer ID to edit: "))
+        name = input("Enter new name: ")
+        phone = input("Enter new phone: ")
+        email = input("Enter new email: ")
+        address = input("Enter new address: ")
+
+        crsr.execute("UPDATE Customers SET name=%s, phone=%s, email=%s, address=%s WHERE cust_id=%s",
+                     (name, phone, email, address, cust_id))
+
+    elif n == 4:
+        txn_id = int(input("Enter transaction ID to edit: "))
+        car_id = int(input("Enter new car ID: "))
+        cust_id = int(input("Enter new customer ID: "))
+        emp_id = int(input("Enter new employee ID: "))
+        sale_price = float(input("Enter new sale price: "))
+        net_profit = float(input("Enter new net profit: "))
+        status = input("Enter new status: ")
+        txn_date = input("Enter new transaction date (YYYY-MM-DD): ")
+        quarter = input("Enter new quarter: ")
+
+        crsr.execute("UPDATE Transactions SET car_id=%s, cust_id=%s, emp_id=%s, sale_price=%s, net_profit=%s, status=%s, txn_date=%s, quarter=%s WHERE txn_id=%s",(car_id, cust_id, emp_id, sale_price, net_profit, status, txn_date, quarter, txn_id))
+
+    else:
+        print("Invalid option.")
+        return
+
+    db.commit()
+
+    if crsr.rowcount > 0:
+        print("Record updated successfully.")
+    else:
+        print("Record not found.")
