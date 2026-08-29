@@ -72,6 +72,7 @@ def purge_dummies():
         for i in recs:
             print(i)
             
+            
 def add_new(n):
     if n == 1:
         car_id = int(input("Enter car ID: "))
