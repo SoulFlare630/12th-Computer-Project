@@ -6,9 +6,9 @@ Alan Anil'''
 debug = False
 import mysql.connector
 
-def dbconnect(passwd):
+def dbconnect(usr, passwd):
     global db, crsr
-    db = mysql.connector.connect(host = 'localhost', user = 'root', password = passwd)
+    db = mysql.connector.connect(host = 'localhost', user = usr, password = passwd)
     crsr = db.cursor()
     
 def setup():
@@ -71,3 +71,153 @@ def purge_dummies():
         recs = crsr.fetchall()
         for i in recs:
             print(i)
+            
+            
+def add_new(n):
+    if n == 1:
+        car_id = int(input("Enter Car ID: "))
+        make = input("Enter Make: ")
+        model = input("Enter Model: ")
+        year = int(input("Enter Year: "))
+        cost_price = float(input("Enter the Cost Price: "))
+        selling_price = float(input("Enter the Selling Price: "))
+        available_qty = int(input("Enter the Available Quantity: "))
+
+        crsr.execute("INSERT INTO Inventory (car_id, make, model, year, cost_price, selling_price, available_qty) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                     (car_id, make, model, year, cost_price, selling_price, available_qty))
+
+    elif n == 2:
+        emp_id = int(input("Enter the Employee ID: "))
+        name = input("Enter the Name: ")
+        passkey = input("Enter the Passkey: ")
+        role = input("Enter the Role: ")
+        phone = input("Enter the Phone: ")
+        salary = float(input("Enter the Salary: "))
+        experience = float(input("Enter the Experience: "))
+
+        crsr.execute("INSERT INTO Staff (emp_id, name, passkey, role, phone, salary, experience) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                     (emp_id, name, passkey, role, phone, salary, experience))
+
+    elif n == 3:
+        cust_id = int(input("Enter the Customer ID: "))
+        name = input("Enter the Name: ")
+        phone = input("Enter the Phone: ")
+        email = input("Enter the Email: ")
+        address = input("Enter the Address: ")
+
+        crsr.execute("INSERT INTO Customers (cust_id, name, phone, email, address) VALUES (%s,%s,%s,%s,%s)",
+                     (cust_id, name, phone, email, address))
+
+    else:
+        print("Invalid Option.")
+        return
+
+    db.commit()
+    print("Record Added Successfully.")
+
+
+def delete(n):
+    if n == 1:
+        car_id = int(input("Enter Car ID to Delete: "))
+        crsr.execute("DELETE FROM Inventory WHERE car_id = %s", (car_id,))
+
+    elif n == 2:
+        emp_id = int(input("Enter Employee ID to Delete: "))
+        crsr.execute("DELETE FROM Staff WHERE emp_id = %s", (emp_id,))
+
+    elif n == 3:
+        cust_id = int(input("Enter Customer ID to Delete: "))
+        crsr.execute("DELETE FROM Customers WHERE cust_id = %s", (cust_id,))
+
+    elif n == 4:
+        txn_id = int(input("Enter Transaction ID to Delete: "))
+        crsr.execute("DELETE FROM Transactions WHERE txn_id = %s", (txn_id,))
+
+    else:
+        print("Invalid Option.")
+        return
+
+    rc = crsr.rowcount
+    db.commit()
+
+    if rc > 0:
+        print("Record Deleted Successfully.")
+    else:
+        print("Record not Found.")
+
+
+def edit(n):
+    if n == 1:
+        car_id = int(input("Enter the Car ID to Edit: "))
+        make = input("Enter the New Make: ")
+        model = input("Enter the New Model: ")
+        year = int(input("Enter the New Year: "))
+        cost_price = float(input("Enter the New Cost Price: "))
+        selling_price = float(input("Enter the New Selling Price: "))
+        available_qty = int(input("Enter the New Available Quantity: "))
+        reserved_qty = int(input("Enter the New Reserved Quantity: "))
+        sold_qty = int(input("Enter the New Sold Quantity: "))
+
+        crsr.execute("UPDATE Inventory SET make=%s, model=%s, year=%s, cost_price=%s, selling_price=%s, available_qty=%s, reserved_qty=%s, sold_qty=%s WHERE car_id=%s",
+                     (make, model, year, cost_price, selling_price, available_qty, reserved_qty, sold_qty, car_id))
+
+    elif n == 2:
+        emp_id = int(input("Enter the Employee ID to Edit: "))
+        name = input("Enter the New Name: ")
+        passkey = input("Enter The New Passkey: ")
+        role = input("Enter the New Role: ")
+        phone = input("Enter the New Phone Number: ")
+        salary = float(input("Enter the New Salary: "))
+        experience = float(input("Enter the New Experience: "))
+
+        crsr.execute("UPDATE Staff SET name=%s, passkey=%s, role=%s, phone=%s, salary=%s, experience=%s WHERE emp_id=%s",
+                     (name, passkey, role, phone, salary, experience, emp_id))
+
+    elif n == 3:
+        cust_id = int(input("Enter the Customer ID to Edit: "))
+        name = input("Enter the New Name: ")
+        phone = input("Enter the New Phone: ")
+        email = input("Enter the New Email: ")
+        address = input("Enter the New Address: ")
+
+        crsr.execute("UPDATE Customers SET name=%s, phone=%s, email=%s, address=%s WHERE cust_id=%s",
+                     (name, phone, email, address, cust_id))
+
+    elif n == 4:
+        txn_id = int(input("Enter the Transaction ID to Edit: "))
+        car_id = int(input("Enter the New Car ID: "))
+        cust_id = int(input("Enter the New Customer ID: "))
+        emp_id = int(input("Enter the New Employee ID: "))
+        sale_price = float(input("Enter the New Sale Price: "))
+        net_profit = float(input("Enter the New Net Profit: "))
+        status = input("Enter the New Status: ")
+        txn_date = input("Enter the New Transaction Date (YYYY-MM-DD): ")
+        quarter = input("Enter the New Quarter: ")
+
+        crsr.execute("UPDATE Transactions SET car_id=%s, cust_id=%s, emp_id=%s, sale_price=%s, net_profit=%s, status=%s, txn_date=%s, quarter=%s WHERE txn_id=%s",(car_id, cust_id, emp_id, sale_price, net_profit, status, txn_date, quarter, txn_id))
+
+    else:
+        print("Invalid Option.")
+        return
+
+    rc = crsr.rowcount
+    db.commit()
+
+    if rc > 0:
+        print("Record Updated Successfully.")
+    else:
+        print("Record not Found.")
+
+def auth(name, psky):
+    crsr.execute("select role from Staff where name = %s and passkey = %s", (name, psky))
+    posn = crsr.fetchone()
+    if posn is not None:
+        if posn[0] == 'Manager':
+            print("Login Successfull (Admin Mode)")
+            return True, "Admin"
+        else:
+            print("Login Successfull")
+            return True, "User"
+    else:
+        print("Entry Not Found")
+        return False, None
