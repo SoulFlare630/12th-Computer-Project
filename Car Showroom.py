@@ -209,6 +209,8 @@ def edit(n):
         print("Record not Found.")
 
 def auth(name, psky):
+    global emp
+    emp = name
     crsr.execute("select role from Staff where name = %s and passkey = %s", (name, psky))
     posn = crsr.fetchone()
     if posn is not None:
@@ -221,3 +223,101 @@ def auth(name, psky):
     else:
         print("User Not Found")
         return False, None
+    
+def txn():
+    try:
+        txn_id = int(input("Enter a Transaction ID: "))
+    except:
+        print("Invalid Input")
+        return False
+    crsr.execute("select txn_id from Transactions where txn_id = %s", (txn_id,))
+    if crsr.fetchone() is not None:
+        print("Transaction ID already in use")
+        return False
+    crsr.execute("select * from Customers")
+    recs = crsr.fetchall()
+    for i in recs:
+        print(i)
+    try:
+        cust_id = int(input("Enter the Customer ID: "))
+    except:
+        print("Invalid Input")
+        return False
+    crsr.execute("select cust_id from Customers where cust_id = %s", (cust_id,))
+    if crsr.fetchone() is None:
+        print("Invalid Customer ID")
+        return False
+    crsr.execute("select * from Inventory")
+    recs = crsr.fetchall()
+    for i in recs:
+        print(i)
+    try:
+        car_id = int(input("Enter the Car ID: "))
+    except:
+        print("Invalid Input")
+        return False
+    crsr.execute("select emp_id from Staff where name = %s", (emp,))
+    emp_id = crsr.fetchone()
+    if emp_id is None:
+        print("Invalid Emloyee ID")
+        return False
+    emp_id = emp_id[0]
+    try:
+        sp = float(input("Enter the Sale Price: "))
+    except:
+        print("Invalid Input")
+        return False
+    crsr.execute("select cost_price, available_qty from Inventory where car_id = %s", (car_id,))
+    cp = crsr.fetchone()
+    if cp is None:
+        print("Invalid Car ID")
+        return False
+    if cp[1] < 1:
+        print("The Entered Product is Out of Stock")
+        return False
+    cp = cp[0]
+    netprof = sp - cp
+    print("The net profit from this transaction will be", netprof)
+    status = input("Enter the Status (Quote/Finalised): ").strip().title()
+    if status not in ('Quote', 'Finalised'):
+        print("Invalid Status")
+        return False
+    txn_date = input("Enter the transaction date (YYYY-MM-DD): ")
+    try:
+        if txn_date.split('-')[1] in ('01', '02', '03'):
+            q = "Q1"
+        elif txn_date.split('-')[1] in ('04', '05', '06'):
+            q = "Q2"
+        elif txn_date.split('-')[1] in ('07', '08', '09'):
+            q = "Q3"
+        else:
+            q = "Q4"
+    except IndexError:
+        print("Invalid Date Format Used")
+        return False
+    crsr.execute("insert into Transactions values (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (txn_id, car_id, cust_id, emp_id, sp, netprof, status, txn_date, q))
+    if status == 'Finalised':
+        crsr.execute("update Inventory set available_qty = available_qty - 1, sold_qty = sold_qty + 1 where car_id = %s", (car_id,))
+    if status == 'Quote':
+        crsr.execute("update Inventory set available_qty = available_qty - 1, reserved_qty = reserved_qty + 1 where car_id = %s", (car_id,))
+    db.commit()
+    prnt = input("Print bill? (y/n): ")
+    if prnt.lower() == "y":
+        crsr.execute("select * from Transactions where txn_id = %s", (txn_id,))
+        bill = crsr.fetchone()
+        crsr.execute("select model from Inventory where car_id = %s", (car_id,))
+        carname = crsr.fetchone()
+        crsr.execute("select name from Customers where cust_id = %s", (cust_id,))
+        cname = crsr.fetchone()
+        crsr.execute("select name from Staff where emp_id = %s", (emp_id,))
+        ename = crsr.fetchone()
+        print("===============  INVOICE  ===============")
+        print("DATE: ", bill[7])
+        print("TRANSACTION ID: ", bill[0])
+        print("CAR: ", carname[0])
+        print("CUSTOMER: ", cname[0])
+        print("EMPLOYEE: ", ename[0])
+        print("PRICE: ", bill[4])
+        print("STATUS: ", bill[6])
+        print("------------------------------------------")
+    return True
