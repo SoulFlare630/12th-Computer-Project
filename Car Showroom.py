@@ -4,6 +4,7 @@ Joel Ephrem Cebin
 Adhinath V. K.
 Alan Anil'''
 debug = False
+user = '' #To be properly defined later into the main code
 import mysql.connector
 
 def dbconnect(usr, passwd):
@@ -223,7 +224,32 @@ def auth(name, psky):
     else:
         print("User Not Found")
         return False, None
-    
+
+def bill(txn_id):
+    crsr.execute("select * from Transactions where txn_id = %s", (txn_id,))
+    try:
+        data = crsr.fetchone()
+    except:
+        print("Invalid Transaction ID")
+        return False
+    date = data[7]
+    crsr.execute("select model from Inventory where car_id = %s", (data[1],))
+    carname = crsr.fetchone()[0]
+    crsr.execute("select name from Customers where cust_id = %s", (data[2],))
+    cust_name = crsr.fetchone()[0]
+    crsr.execute("select name from Staff where emp_id = %s", (data[3],))
+    emp_name = crsr.fetchone()[0]
+    print("===============  INVOICE  ===============")
+    print("DATE: ", date)
+    print("TRANSACTION ID: ", txn_id)
+    print("CAR: ", carname)
+    print("CUSTOMER: ", cust_name)
+    print("EMPLOYEE: ", emp_name)
+    print("PRICE: ", data[4])
+    print("STATUS: ", data[6])
+    print("------------------------------------------")
+    return True
+
 def txn():
     try:
         txn_id = int(input("Enter a Transaction ID: "))
@@ -295,29 +321,90 @@ def txn():
     except IndexError:
         print("Invalid Date Format Used")
         return False
-    crsr.execute("insert into Transactions values (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (txn_id, car_id, cust_id, emp_id, sp, netprof, status, txn_date, q))
-    if status == 'Finalised':
-        crsr.execute("update Inventory set available_qty = available_qty - 1, sold_qty = sold_qty + 1 where car_id = %s", (car_id,))
-    if status == 'Quote':
-        crsr.execute("update Inventory set available_qty = available_qty - 1, reserved_qty = reserved_qty + 1 where car_id = %s", (car_id,))
-    db.commit()
+    try:
+        crsr.execute("insert into Transactions values (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (txn_id, car_id, cust_id, emp_id, sp, netprof, status, txn_date, q))
+        if status == 'Finalised':
+            crsr.execute("update Inventory set available_qty = available_qty - 1, sold_qty = sold_qty + 1 where car_id = %s", (car_id,))
+        elif status == 'Quote':
+            crsr.execute("update Inventory set available_qty = available_qty - 1, reserved_qty = reserved_qty + 1 where car_id = %s", (car_id,))
+        db.commit()
+    except mysql.connector.Error as err:
+        db.rollback()
+        print("Connection Error -", err)
+        return False
     prnt = input("Print bill? (y/n): ")
     if prnt.lower() == "y":
-        crsr.execute("select * from Transactions where txn_id = %s", (txn_id,))
-        bill = crsr.fetchone()
-        crsr.execute("select model from Inventory where car_id = %s", (car_id,))
-        carname = crsr.fetchone()
-        crsr.execute("select name from Customers where cust_id = %s", (cust_id,))
-        cname = crsr.fetchone()
-        crsr.execute("select name from Staff where emp_id = %s", (emp_id,))
-        ename = crsr.fetchone()
-        print("===============  INVOICE  ===============")
-        print("DATE: ", bill[7])
-        print("TRANSACTION ID: ", bill[0])
-        print("CAR: ", carname[0])
-        print("CUSTOMER: ", cname[0])
-        print("EMPLOYEE: ", ename[0])
-        print("PRICE: ", bill[4])
-        print("STATUS: ", bill[6])
-        print("------------------------------------------")
+        status = bill(txn_id)
+        if status == False:
+            print("Unable to Print Bill")
+    return True
+
+def finalise(txn_id):
+    crsr.execute("select * from Transactions where txn_id = %s", (txn_id,))
+    txn = crsr.fetchone()
+    if txn is None:
+        print("Invalid Transaction ID")
+        return False
+    if txn[6] == "Finalised":
+        print("This transaction is already finalised")
+        return False
+    car_id = txn[1]
+    try:
+        crsr.execute("update Transactions set status = 'Finalised' where txn_id = %s", (txn_id,))
+        crsr.execute("update Inventory set sold_qty = sold_qty + 1, reserved_qty = reserved_qty - 1 where car_id = %s", (car_id,))
+        db.commit()
+    except mysql.connector.Error as err:
+        db.rollback()
+        print("Updation failed:", err)
+        return False
+    inv = input("Do you want to print the bill? (y/n): ").lower()
+    if inv == 'y':
+        status = bill(txn_id)
+        if status == False:
+            print("Bill Printing Failed")
+    return True
+
+def disp(n):
+    if n == 1:
+        crsr.execute("select * from Customers")
+        print(('Customer ID', 'Name', 'Phone', 'Email', 'Address'))
+        for i in crsr.fetchall():
+            print(i)
+    elif n == 2:
+        crsr.execute("select * from Inventory")
+        print(('Car ID', 'Make', 'Model', 'Year', 'Cost Price', 'Selling Price', 'Available', 'Reserved', 'Sold'))
+        for i in crsr.fetchall():
+            print(i)
+    elif n == 3:
+        if user == "Admin":
+            crsr.execute("select * from Staff")
+            print(('Employee ID', 'Name', 'Passkey', 'Role', 'Phone', 'Salary', 'Experience'))
+            for i in crsr.fetchall():
+                print(i)
+        else:
+            print("Access Denied: Table requires Elevated Privileges to View")
+            return False
+    elif n == 4:
+        crsr.execute("select * from Transactions")
+        print(('Txn ID', 'Car ID', 'Cust ID', 'Emp ID', 'Sale Price', 'Net Profit', 'Status', 'Date', 'Quarter'))
+        for i in crsr.fetchall():
+            print(i)
+    else:
+        print("Invalid Option")
+        return False
+    return True
+
+def q_report():
+    crsr.execute("select quarter, count(txn_id), sum(sale_price), sum(net_profit), avg(net_profit) from Transactions where status = 'Finalised' group by quarter order by quarter")
+    data = crsr.fetchall()
+    if data == []:
+        print("No data to show")
+        return False
+    print(('Quarter', 'Transactions', 'Total Sale Price', 'Total Profit', 'Average Profit'))
+    tsales, tprofit = 0, 0
+    for i in data:
+        print(i)
+        tsales += i[2]
+        tprofit += i[3]
+    print(('TOTAL', '       ', tsales, tprofit, '             '))
     return True
