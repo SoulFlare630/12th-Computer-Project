@@ -408,3 +408,15 @@ def q_report():
         tprofit += i[3]
     print(('TOTAL', '       ', tsales, tprofit, '             '))
     return True
+
+def emp_stats():
+    crsr.execute("select Staff.emp_id, Staff.name, Staff.experience, count(Transactions.txn_id), sum(Transactions.net_profit) from Staff, Transactions where Staff.emp_id = Transactions.emp_id and Transactions.status = 'Finalised' group by Staff.name, Staff.experience, Staff.emp_id order by count(Transactions.txn_id) desc")
+    data = crsr.fetchall()
+    if data == []:
+        print("No Data Available")
+        return False
+    print("==================STAFF SALES REPORT==================")
+    print(('ID', 'Name', 'Experience', 'Sold', 'Total Profits'))
+    for i in data:
+        print(i)
+    return True
