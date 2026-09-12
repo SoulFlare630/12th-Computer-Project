@@ -60,18 +60,28 @@ def dummies():
 
 
 def purge_dummies():
-    crsr.execute("truncate table Transactions")
-    crsr.execute("truncate table Customers")
-    crsr.execute("truncate table Inventory")
-    crsr.execute("truncate table Staff")
-    db.commit()
-    print("Dummy values cleared")
-
-    if debug:
-        crsr.execute("show tables")
-        recs = crsr.fetchall()
-        for i in recs:
-            print(i)
+    if user == "Admin":
+        print("WARNING: This operation will erase ALL DATA contained within the database.")
+        conf = input("To confirm, type 'Yes, do as I say!': ")
+        if conf == 'Yes, do as I say!':
+            crsr.execute("truncate table Transactions")
+            crsr.execute("truncate table Customers")
+            crsr.execute("truncate table Inventory")
+            crsr.execute("truncate table Staff")
+            db.commit()
+            print("Dummy values cleared")
+            if debug:
+                crsr.execute("show tables")
+                recs = crsr.fetchall()
+                for i in recs:
+                    print(i)
+            return True
+        else:
+            print("Deletion cancelled")
+            return False
+    else:
+        print("This function requires elevated privileges")
+        return False
             
             
 def add_new(n):
@@ -395,28 +405,36 @@ def disp(n):
     return True
 
 def q_report():
-    crsr.execute("select quarter, count(txn_id), sum(sale_price), sum(net_profit), avg(net_profit) from Transactions where status = 'Finalised' group by quarter order by quarter")
-    data = crsr.fetchall()
-    if data == []:
-        print("No data to show")
+    if user == "Admin":
+        crsr.execute("select quarter, count(txn_id), sum(sale_price), sum(net_profit), avg(net_profit) from Transactions where status = 'Finalised' group by quarter order by quarter")
+        data = crsr.fetchall()
+        if data == []:
+            print("No data to show")
+            return False
+        print(('Quarter', 'Transactions', 'Total Sale Price', 'Total Profit', 'Average Profit'))
+        tsales, tprofit = 0, 0
+        for i in data:
+            print(i)
+            tsales += i[2]
+            tprofit += i[3]
+        print(('TOTAL', '       ', tsales, tprofit, '             '))
+        return True
+    else:
+        print("This function requires elevated privileges.")
         return False
-    print(('Quarter', 'Transactions', 'Total Sale Price', 'Total Profit', 'Average Profit'))
-    tsales, tprofit = 0, 0
-    for i in data:
-        print(i)
-        tsales += i[2]
-        tprofit += i[3]
-    print(('TOTAL', '       ', tsales, tprofit, '             '))
-    return True
 
 def emp_stats():
-    crsr.execute("select Staff.emp_id, Staff.name, Staff.experience, count(Transactions.txn_id), sum(Transactions.net_profit) from Staff, Transactions where Staff.emp_id = Transactions.emp_id and Transactions.status = 'Finalised' group by Staff.name, Staff.experience, Staff.emp_id order by count(Transactions.txn_id) desc")
-    data = crsr.fetchall()
-    if data == []:
-        print("No Data Available")
+    if user == "Admin":
+        crsr.execute("select Staff.emp_id, Staff.name, Staff.experience, count(Transactions.txn_id), sum(Transactions.net_profit) from Staff, Transactions where Staff.emp_id = Transactions.emp_id and Transactions.status = 'Finalised' group by Staff.name, Staff.experience, Staff.emp_id order by count(Transactions.txn_id) desc")
+        data = crsr.fetchall()
+        if data == []:
+            print("No Data Available")
+            return False
+        print("==================STAFF SALES REPORT==================")
+        print(('ID', 'Name', 'Experience', 'Sold', 'Total Profits'))
+        for i in data:
+            print(i)
+        return True
+    else:
+        print("This function requires elevated privileges.")
         return False
-    print("==================STAFF SALES REPORT==================")
-    print(('ID', 'Name', 'Experience', 'Sold', 'Total Profits'))
-    for i in data:
-        print(i)
-    return True
