@@ -4,7 +4,6 @@ Joel Ephrem Cebin
 Adhinath V. K.
 Alan Anil'''
 debug = False
-user = '' #To be properly defined later into the main code
 import mysql.connector
 
 def dbconnect(usr, passwd):
@@ -59,8 +58,8 @@ def dummies():
         print()
 
 
-def purge_dummies():
-    if user == "Admin":
+def purge():
+    if Admin:
         print("WARNING: This operation will erase ALL DATA contained within the database.")
         conf = input("To confirm, type 'Yes, do as I say!': ")
         if conf == 'Yes, do as I say!':
@@ -220,35 +219,52 @@ def edit(n):
         print("Record not Found.")
 
 def auth(name, psky):
-    global emp
+    global emp, Admin
     emp = name
     crsr.execute("select role from Staff where name = %s and passkey = %s", (name, psky))
     posn = crsr.fetchone()
     if posn is not None:
         if posn[0] == 'Manager':
             print("Login Successfull (Admin Mode)")
-            return True, "Admin"
+            Admin = True
+            return True
         else:
             print("Login Successfull")
-            return True, "User"
+            Admin = False
+            return True
     else:
         print("User Not Found")
-        return False, None
+        Admin = False
+        return False
 
 def bill(txn_id):
     crsr.execute("select * from Transactions where txn_id = %s", (txn_id,))
-    try:
-        data = crsr.fetchone()
-    except:
+    data = crsr.fetchone()
+    if data is None:
         print("Invalid Transaction ID")
         return False
     date = data[7]
     crsr.execute("select model from Inventory where car_id = %s", (data[1],))
-    carname = crsr.fetchone()[0]
+    carname = crsr.fetchone()
+    if carname is not None:
+        carname = carname[0]
+    else:
+        print("Car not found")
+        return False
     crsr.execute("select name from Customers where cust_id = %s", (data[2],))
-    cust_name = crsr.fetchone()[0]
+    cust_name = crsr.fetchone()
+    if cust_name is not None:
+        cust_name = cust_name[0]
+    else:
+        print("Customer Name not found")
+        return False
     crsr.execute("select name from Staff where emp_id = %s", (data[3],))
-    emp_name = crsr.fetchone()[0]
+    emp_name = crsr.fetchone()
+    if emp_name is not None:
+        emp_name = emp_name[0]
+    else:
+        print("Employee Name not found")
+        return False
     print("===============  INVOICE  ===============")
     print("DATE: ", date)
     print("TRANSACTION ID: ", txn_id)
@@ -319,17 +335,23 @@ def txn():
         print("Invalid Status")
         return False
     txn_date = input("Enter the transaction date (YYYY-MM-DD): ")
-    try:
-        if txn_date.split('-')[1] in ('01', '02', '03'):
-            q = "Q1"
-        elif txn_date.split('-')[1] in ('04', '05', '06'):
-            q = "Q2"
-        elif txn_date.split('-')[1] in ('07', '08', '09'):
-            q = "Q3"
-        else:
-            q = "Q4"
-    except IndexError:
+    split = txn_date.split('-')
+    if len(split) != 3:
         print("Invalid Date Format Used")
+        return False
+    if not (split[0].isdigit() and split[1].isdigit() and split[2].isdigit()):
+        print("Invalid Date Format Used")
+        return False
+    if split[1] in ('01', '02', '03'):
+        q = "Q1"
+    elif split[1] in ('04', '05', '06'):
+        q = "Q2"
+    elif split[1] in ('07', '08', '09'):
+        q = "Q3"
+    elif split[1] in ('10', '11', '12'):
+        q = "Q4"
+    else:
+        print("Invalid Month Value")
         return False
     try:
         crsr.execute("insert into Transactions values (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (txn_id, car_id, cust_id, emp_id, sp, netprof, status, txn_date, q))
@@ -340,7 +362,7 @@ def txn():
         db.commit()
     except mysql.connector.Error as err:
         db.rollback()
-        print("Connection Error -", err)
+        print("Database Error -", err)
         return False
     prnt = input("Print bill? (y/n): ")
     if prnt.lower() == "y":
@@ -386,7 +408,7 @@ def disp(n):
         for i in crsr.fetchall():
             print(i)
     elif n == 3:
-        if user == "Admin":
+        if Admin:
             crsr.execute("select * from Staff")
             print(('Employee ID', 'Name', 'Passkey', 'Role', 'Phone', 'Salary', 'Experience'))
             for i in crsr.fetchall():
@@ -405,7 +427,7 @@ def disp(n):
     return True
 
 def q_report():
-    if user == "Admin":
+    if Admin:
         crsr.execute("select quarter, count(txn_id), sum(sale_price), sum(net_profit), avg(net_profit) from Transactions where status = 'Finalised' group by quarter order by quarter")
         data = crsr.fetchall()
         if data == []:
@@ -424,7 +446,7 @@ def q_report():
         return False
 
 def emp_stats():
-    if user == "Admin":
+    if Admin:
         crsr.execute("select Staff.emp_id, Staff.name, Staff.experience, count(Transactions.txn_id), sum(Transactions.net_profit) from Staff, Transactions where Staff.emp_id = Transactions.emp_id and Transactions.status = 'Finalised' group by Staff.name, Staff.experience, Staff.emp_id order by count(Transactions.txn_id) desc")
         data = crsr.fetchall()
         if data == []:
