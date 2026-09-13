@@ -438,3 +438,34 @@ def emp_stats():
     else:
         print("This function requires elevated privileges.")
         return False
+
+def cust_history():
+    try:
+        cust_id = int(input("Enter the Customer ID: "))
+    except ValueError:
+        print("Invalid Input")
+        return False
+
+    crsr.execute("select name from Customers where cust_id = %s", (cust_id,))
+    cust_name = crsr.fetchone()
+    
+    if cust_name is None:
+        print("Invalid Customer ID")
+        return False
+
+    print("\n========== PURCHASE HISTORY ==========")
+    print("CUSTOMER: ", cust_name[0])
+    print("--------------------------------------")
+
+    crsr.execute("select Transactions.txn_id, Transactions.txn_date, Inventory.make, Inventory.model, Transactions.sale_price, Transactions.status from Transactions, Inventory where Transactions.car_id = Inventory.car_id and Transactions.cust_id = %s order by Transactions.txn_date desc", (cust_id,))
+    recs = crsr.fetchall()
+
+    if recs == []:
+        print("No purchase history found for this customer.")
+    else:
+        print(('Txn ID', 'Date', 'Make', 'Model', 'Price', 'Status'))
+        for i in recs:
+            print(i)
+            
+    print("======================================\n")
+    return True
