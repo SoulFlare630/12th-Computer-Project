@@ -8,8 +8,12 @@ import mysql.connector
 
 def dbconnect(usr, passwd):
     global db, crsr
-    db = mysql.connector.connect(host = 'localhost', user = usr, password = passwd)
+    try:
+        db = mysql.connector.connect(host = 'localhost', user = usr, password = passwd)
+    except mysql.connector.Error:
+        return False
     crsr = db.cursor()
+    return True
     
 def setup():
     crsr.execute("create database if not exists carshowroom")
@@ -22,9 +26,21 @@ def setup():
     if debug:
         print("Table Setup Complete")
         crsr.execute('desc Customers')
+        data = crsr.fetchall()
+        for i in data:
+            print(i)
         crsr.execute('desc Inventory')
+        data = crsr.fetchall()
+        for i in data:
+            print(i)
         crsr.execute('desc Staff')
+        data = crsr.fetchall()
+        for i in data:
+            print(i)
         crsr.execute('desc Transactions')
+        data = crsr.fetchall()
+        for i in data:
+            print(i)
 
 
 def dummies():
@@ -220,16 +236,16 @@ def edit(n):
 
 def auth(name, psky):
     global emp, Admin
-    emp = name
-    crsr.execute("select role from Staff where name = %s and passkey = %s", (name, psky))
+    emp = name.strip()
+    crsr.execute("select role from Staff where name = %s and passkey = %s", (name, psky.strip()))
     posn = crsr.fetchone()
     if posn is not None:
         if posn[0] == 'Manager':
-            print("Login Successfull (Admin Mode)")
+            print("Login Successful (Admin Mode)")
             Admin = True
             return True
         else:
-            print("Login Successfull")
+            print("Login Successful")
             Admin = False
             return True
     else:
@@ -491,3 +507,49 @@ def cust_history():
             
     print("======================================\n")
     return True
+
+#MAIN PROGRAM
+
+while True:
+    if dbconnect(input("Enter your MySQL Username: "), input("Enter you MySQL Password: ")):
+        print("Database Connection Successful")
+        break
+    else:
+        print("Database Connection Failed")
+
+setup()
+opt = input("Do you want to add dummy values into the database for testing? (y/n): ")
+if opt.lower() == 'y':
+    dummies()
+else:
+    print("Dummy values can be added later if you change your mind.")
+    
+crsr.execute("select count(*) from Staff where Role = 'Manager'")
+data = crsr.fetchone()
+if data[0] == 0:
+    while True:
+        print("No Manager Data is Available in the Database.")
+        print("Please add a Manager account to continue")
+        if add_new(2): #Remove once the function returns a boolean value
+            crsr.execute("select count(*) from Staff where Role = 'Manager'")
+            data = crsr.fetchone()
+            if data[0] != 0:
+                break
+
+while True:
+    if auth(input("Enter your Name: "), input("Enter your Passkey: ")):
+        break
+
+while True:
+    print("==========CAR SHOWROOM DATABASE==========")
+    print("|        PLEASE SELECT AN OPTION        |")
+    print("|        [1] Customer Details           |")
+    print("|        [2] Inventory Management       |")
+    print("|        [3] Transactions               |")
+    print("|        [4] Exit                       |")
+    if Admin:
+        print("|        [5] Staff Details              |")
+        print("|        [6] Statistics                 |")
+        print("|        [7] Administrator Menu         |")
+    print("+---------------------------------------+")
+    opt = input("       Enter an option: ").strip() #Remove once invalid options are handled
