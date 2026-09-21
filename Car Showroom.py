@@ -97,8 +97,13 @@ def purge():
     else:
         print("This function requires elevated privileges")
         return False
-            
- def add_new(n):
+
+def add_new(n):
+    '''
+    1 - New Car
+    2 - New Employee
+    3 - New Customer
+    '''
     try:
         if n == 1:
             car_id = int(input("Enter Car ID: "))
@@ -151,6 +156,11 @@ def purge():
 
 
 def edit_record(n):
+    '''
+    1 - Inventory
+    2 - Staff
+    3 - Customers
+    '''
     try:
         if n == 1:
             record_id = int(input("Enter Car ID to edit: "))
@@ -202,6 +212,11 @@ def edit_record(n):
 
 
 def delete_record(n):
+    '''
+    1 - Inventory
+    2 - Staff
+    3 - Customers
+    '''
     try:
         if n == 1:
             record_id = int(input("Enter Car ID to delete: "))
@@ -425,6 +440,12 @@ def finalise(txn_id):
     return True
 
 def disp(n):
+    '''
+    1 - Customers
+    2 - Inventory
+    3 - Staff
+    4 - Transactions
+    '''
     if n == 1:
         crsr.execute("select * from Customers")
         print(('Customer ID', 'Name', 'Phone', 'Email', 'Address'))
@@ -571,7 +592,7 @@ if data[0] == 0:
     while True:
         print("No Manager Data is Available in the Database.")
         print("Please add a Manager account to continue")
-        if add_new(2): #Remove once the function returns a boolean value
+        if add_new(2):
             crsr.execute("select count(*) from Staff where Role = 'Manager'")
             data = crsr.fetchone()
             if data[0] != 0:
@@ -593,4 +614,44 @@ while True:
         print("|        [6] Statistics                 |")
         print("|        [7] Administrator Menu         |")
     print("+---------------------------------------+")
-    opt = input("       Enter an option: ").strip() #Remove once invalid options are handled
+    opt = input("       Enter an option: ").strip()
+    if opt == '1':
+        while True:
+            print("[1] Add New Customer")
+            print("[2] View All Customers")
+            print("[3] Update Customer Details")
+            print("[4] Delete Customer Details")
+            print("[5] Back")
+            sub_opt = input('Select an Option: ').strip()
+            if sub_opt == '1':
+                add_new(3)
+            elif sub_opt == '2':
+                disp(1)
+            elif sub_opt == '3':
+                edit_record(3)
+            elif sub_opt == '4':
+                delete_record(3)
+            elif sub_opt == '5':
+                break
+            else:
+                print("Invalid Option")
+    elif opt == '2':
+        while True:
+            print("[1] Add a New Car")
+            print("[2] View Inventory")
+            print("[3] Update Car Details")
+            print("[4] Delete a Car")
+            print("[5] Back")
+            sub_opt = input('Select an Option: ').strip()
+            if sub_opt == '1':
+                add_new(1)
+            elif sub_opt == '2':
+                disp(2)
+            elif sub_opt == '3':
+                edit_record(1)
+            elif sub_opt == '4':
+                delete_record(1)
+            elif sub_opt == '5':
+                break
+            else:
+                print("Invalid Option")
