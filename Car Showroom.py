@@ -18,8 +18,7 @@ def dbconnect(usr, passwd):
 def setup():
     crsr.execute("create database if not exists carshowroom")
     crsr.execute("use carshowroom")
-    crsr.execute("create table if not exists Customers (cust_id int primary key, name varchar(100) not null, phone varchar(15) not null, email varchar(100), address varchar(255))")
-    crsr.execute("create table if not exists Inventory (car_id int primary key, make varchar(50) not null, model varchar(50) not null, year int not null, cost_price decimal(15, 2) not null, selling_price decimal(15, 2) not null, available_qty int default 0, reserved_qty int default 0, sold_qty int default 0)")
+    crsr.execute("create table if not  exists Inventory (car_id int primary key, make varchar(50) not null, model varchar(50) not null, year int not null, cost_price decimal(15, 2) not null, selling_price decimal(15, 2) not null, available_qty int default 0, reserved_qty int default 0, sold_qty int default 0)")
     crsr.execute("create table if not exists Staff (emp_id int primary key, name varchar(100) not null, passkey varchar(50), role varchar(20) not null, phone varchar(15) not null, salary decimal(10,2) not null, experience decimal(4, 2) not null)")
     crsr.execute("create table if not exists Transactions (txn_id int primary key, car_id int not null, cust_id int not null, emp_id int not null, sale_price decimal(15,2) not null, net_profit decimal(15,2) not null, status varchar(20) default 'Quote', txn_date date not null, quarter varchar(5) not null)")
     
@@ -151,7 +150,7 @@ def add_new(n):
         return False
     except Exception as e:
         db.rollback() 
-        print(f"Failed to add record due to a database error: {e}")
+        print("Failed to add record due to a database error:", e)
         return False
 
 
@@ -165,8 +164,8 @@ def edit_record(n):
         if n == 1:
             record_id = int(input("Enter Car ID to edit: "))
             col = input("Enter column to update (make, model, year, cost_price, selling_price, available_qty): ")
-            val = input(f"Enter new value for {col}: ")
-            crsr.execute(f"UPDATE Inventory SET {col} = %s WHERE car_id = %s", (val, record_id))
+            val = input("Enter new value for " + col + ": ")
+            crsr.execute("UPDATE Inventory SET " + col + " = %s WHERE car_id = %s", (val, record_id))
             if crsr.rowcount == 0:
                 print("Failed: Car ID not found or no changes were made.")
                 return False
@@ -177,8 +176,8 @@ def edit_record(n):
         elif n == 2:
             record_id = int(input("Enter Employee ID to edit: "))
             col = input("Enter column to update (name, passkey, role, phone, salary, experience): ")
-            val = input(f"Enter new value for {col}: ")
-            crsr.execute(f"UPDATE Staff SET {col} = %s WHERE emp_id = %s", (val, record_id))
+            val = input("Enter new value for " + col + ": ")
+            crsr.execute("UPDATE Staff SET " + col + " = %s WHERE emp_id = %s", (val, record_id))
             if crsr.rowcount == 0:
                 print("Failed: Employee ID not found or no changes were made.")
                 return False
@@ -189,8 +188,8 @@ def edit_record(n):
         elif n == 3:
             record_id = int(input("Enter Customer ID to edit: "))
             col = input("Enter column to update (name, phone, email, address): ")
-            val = input(f"Enter new value for {col}: ")
-            crsr.execute(f"UPDATE Customers SET {col} = %s WHERE cust_id = %s", (val, record_id))
+            val = input("Enter new value for " + col + ": ")
+            crsr.execute("UPDATE Customers SET " + col + " = %s WHERE cust_id = %s", (val, record_id))
             if crsr.rowcount == 0:
                 print("Failed: Customer ID not found or no changes were made.")
                 return False
@@ -207,7 +206,7 @@ def edit_record(n):
         return False
     except Exception as e:
         db.rollback()
-        print(f"Failed to update record due to a database error: {e}")
+        print("Failed to update record due to a database error:", e)
         return False
 
 
@@ -257,7 +256,7 @@ def delete_record(n):
         return False
     except Exception as e:
         db.rollback()
-        print(f"Failed to delete record due to a database error: {e}")
+        print("Failed to delete record due to a database error:", e)
         return False           
 
 
@@ -547,27 +546,33 @@ def show_statistics():
         
         crsr.execute("SELECT SUM(available_qty) FROM Inventory")
         total_cars = crsr.fetchone()[0]
-        total_cars = total_cars if total_cars is not None else 0
-        print(f"Total Cars in Stock: {total_cars}")
+        if total_cars == None:
+            total_cars = 0
+        print("Total Cars in Stock:", total_cars)
         
         crsr.execute("SELECT SUM(cost_price * available_qty) FROM Inventory")
         inventory_value = crsr.fetchone()[0]
-        inventory_value = inventory_value if inventory_value is not None else 0
-        print(f"Total Inventory Value (Cost): ${inventory_value:,.2f}")
+        if inventory_value == None:
+            inventory_value = 0
+        print("Total Inventory Value (Cost): $", inventory_value)
         
         crsr.execute("SELECT COUNT(cust_id) FROM Customers")
         total_customers = crsr.fetchone()[0]
-        print(f"Total Registered Customers: {total_customers}")
+        if total_customers == None:
+            total_customers = 0
+        print("Total Registered Customers:", total_customers)
         
         crsr.execute("SELECT COUNT(emp_id) FROM Staff")
         total_staff = crsr.fetchone()[0]
-        print(f"Total Staff Members: {total_staff}")
+        if total_staff == None:
+            total_staff = 0
+        print("Total Staff Members:", total_staff)
         
         print("=========================================\n")
         return True
         
     except Exception as e:
-        print(f"Failed to retrieve statistics due to a database error: {e}")
+        print("Failed to retrieve statistics due to a database error:", e)
         return False
         
 #MAIN PROGRAM
