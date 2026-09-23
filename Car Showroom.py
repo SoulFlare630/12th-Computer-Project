@@ -215,6 +215,7 @@ def delete_record(n):
     1 - Inventory
     2 - Staff
     3 - Customers
+    4 - Quotes (To be Added)
     '''
     try:
         if n == 1:
@@ -431,6 +432,7 @@ def finalise(txn_id):
         db.rollback()
         print("Updation failed:", err)
         return False
+    print("Transaction Finalised Successfully")
     inv = input("Do you want to print the bill? (y/n): ").lower()
     if inv == 'y':
         status = bill(txn_id)
@@ -657,6 +659,36 @@ while True:
             elif sub_opt == '4':
                 delete_record(1)
             elif sub_opt == '5':
+                break
+            else:
+                print("Invalid Option")
+    elif opt == '3':
+        while True:
+            print("[1] Create a New Quote/Transaction")
+            print("[2] Finalise a Quote")
+            print("[3] Cancel a Reservation")
+            print("[4] View/Reprint an Invoice")
+            print("[5] Show All Transactions")
+            print("[6] Back")
+            sub_opt = input("Enter your choice: ")
+            if sub_opt == '1':
+                txn()
+            elif sub_opt == '2':
+                try:
+                    finalise(int(input("Enter the Transaction ID: ")))
+                except ValueError:
+                    print("ERROR: Transaction ID must be Numerical")
+            elif sub_opt == '3':
+                #Remove once function implemented
+                print("WIP")
+            elif sub_opt == '4':
+                try:
+                    bill(int(input("Enter the Transaction ID: ")))
+                except ValueError:
+                    print("ERROR: Transaction ID must be Numerical")
+            elif sub_opt == '5':
+                disp(4)
+            elif sub_opt == '6':
                 break
             else:
                 print("Invalid Option")
