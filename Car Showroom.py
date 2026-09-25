@@ -44,12 +44,14 @@ def setup():
 
 
 def dummies():
-    crsr.execute("insert into Customers values (301, 'Rahul Menon', '9123456780', 'rahul.m@gmail.com', 'Kochi, Kerala'), (302, 'Anaya Nair', '9123456781', 'ananya.n@gmail.com', 'Trivandrum, Kerala'), (303, 'Deepak George', '9123456782', 'deepak.g@outlook.com', 'Kottayam, Kerala')")
-    crsr.execute("insert into Inventory values (201, 'Toyota', 'Urban Cruiser Hyryder', 2025, 1600000.00, 1850000.00, 4, 1, 2), (202, 'Honda', 'City ZX', 2025, 1400000.00, 1650000.00, 5, 0, 1), (203, 'Kia', 'Seltos GTX+',2025, 1700000.00, 1950000.00, 2, 2, 3), (204, 'Maruti Suzuki', 'Brezza ZXi', 2024, 950000.00, 1100000.00, 6, 1, 5), (205, 'Hyundai', 'Creta SX', 2025, 1350000.00, 1550000.00, 3, 0, 4)")
-    crsr.execute("insert into Staff values (101, 'Suresh Kumar', 'admin123', 'Manager', '9876543210', '85000.00', 6.50), (102, 'Vikram Sharma', 'sales123', 'Sales', '9876543211', '35000.00', 2.00), (103, 'Rajesh Verma', 'sales456', 'Sales', '9876543212', '42000.00', 4.25)")
-    crsr.execute("insert into Transactions values (401, 204, 301, 102, 1100000.00, 150000.00, 'Finalised', '2026-05-15', 'Q2'), (402, 203, 302, 103, 1950000.00, 250000.00, 'Quote', '2026-08-10', 'Q3'), (403, 201, 303, 102, 1850000.00, 250000.00, 'Finalised', '2026-08-20', 'Q3')")
+    crsr.execute("insert into Customers values (301, 'Naveen Nair', '9847123456', 'naveen.nair@gmail.com', 'Panampilly Nagar, Kochi'), (302, 'Fathima Rafeeq', '9447234567', 'fathima.r@yahoo.com', 'Manacaud, Thiruvananthapuram'), (303, 'Rony Mathew', '9744345678', 'rony.mathew@outlook.com', 'Kanjikuzhy, Kottayam'), (304, 'Aisha Sulaiman', '9895456789', 'aisha.sulaiman@gmail.com', 'Palayam, Kozhikode'), (305, 'Harikrishnan V.', '9496567890', 'hari.krishnan@gmail.com', 'Chembukkav, Thrissur')")
+    crsr.execute("insert into Inventory values (201, 'Toyota', 'Innova Hycross ZX', 2025, 2400000.00, 2750000.00, 3, 1, 2), (202, 'Hyundai', 'Creta SX(O)', 2025, 1500000.00, 1720000.00, 4, 0, 3), (203, 'Mahindra', 'Thar Roxx AX7L', 2026, 1850000.00, 2100000.00, 0, 1, 4), (204, 'Maruti Suzuki', 'Swift ZXi+', 2025, 750000.00, 880000.00, 5, 0, 4), (205, 'Tata', 'Nexon EV Empowered', 2026, 1450000.00, 1680000.00, 2, 0, 1)")
+    crsr.execute("insert into Staff values (101, 'Mathew Thomas', 'admin123', 'Manager', '9846011223', 85000.00, 7.50), (102, 'Mohammed Asif', 'sales123', 'Sales', '9745122334', 38000.00, 3.00), (103, 'Sreekanth Pillai', 'sales456', 'Sales', '9633233445', 42000.00, 4.50), (104, 'Anju Varghese', 'sales789', 'Sales', '9447344556', 32000.00, 1.50)")
+    crsr.execute("insert into Transactions values (401, 201, 301, 102, 2750000.00, 350000.00, 'Finalised', '2026-01-18', 'Q1'), (402, 204, 302, 102, 880000.00, 130000.00, 'Finalised', '2026-04-12', 'Q2'), (403, 202, 301, 103, 1720000.00, 220000.00, 'Finalised', '2026-07-25', 'Q3'), (404, 205, 304, 102, 1680000.00, 230000.00, 'Finalised', '2026-10-05', 'Q4'), (405, 203, 303, 103, 2100000.00, 250000.00, 'Quote', '2026-11-14', 'Q4'), (406, 201, 301, 104, 2750000.00, 350000.00, 'Quote', '2026-12-02', 'Q4')")
     db.commit()
     print("Dummy values have been inserted successfully")
+    print("Dummy Admin Name: Mathew Thomas")
+    print("Dummy Admin Password: admin123")
     
     if debug:
         crsr.execute('select * from Customers')
@@ -228,7 +230,7 @@ def delete_record(n):
             db.commit()
             print("Car deleted successfully.")
             return True
-            
+
         elif n == 2:
             record_id = int(input("Enter Employee ID to delete: "))
             crsr.execute("DELETE FROM Staff WHERE emp_id = %s", (record_id,))
@@ -238,7 +240,7 @@ def delete_record(n):
             db.commit()
             print("Employee deleted successfully.")
             return True
-            
+
         elif n == 3:
             record_id = int(input("Enter Customer ID to delete: "))
             crsr.execute("DELETE FROM Customers WHERE cust_id = %s", (record_id,))
@@ -248,7 +250,22 @@ def delete_record(n):
             db.commit()
             print("Customer deleted successfully.")
             return True
-            
+
+        elif n == 4:
+            record_id = int(input("Enter the Quote ID to delete: "))
+            crsr.execute("select txn_id, car_id from Transactions where status = 'Quote' and txn_id = %s", (record_id,))
+            tup = crsr.fetchone()
+            if tup is None:
+                print("No Quotes Found")
+                return False
+            txn_id = tup[0]
+            car_id = tup[1]
+            crsr.execute("delete from Transactions where txn_id = %s", (record_id,))
+            crsr.execute("update Inventory set available_qty = available_qty + 1, reserved_qty = reserved_qty - 1 where car_id = %s", (car_id,))
+            db.commit()
+            print("Quote Deleted Successfully")
+            return True
+
         else:
             print("Failed: Invalid Option Selected.")
             return False
@@ -683,8 +700,7 @@ while True:
                 except ValueError:
                     print("ERROR: Transaction ID must be Numerical")
             elif sub_opt == '3':
-                #Remove once function implemented
-                print("WIP")
+                delete_record(4)
             elif sub_opt == '4':
                 try:
                     bill(int(input("Enter the Transaction ID: ")))
