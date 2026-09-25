@@ -18,7 +18,8 @@ def dbconnect(usr, passwd):
 def setup():
     crsr.execute("create database if not exists carshowroom")
     crsr.execute("use carshowroom")
-    crsr.execute("create table if not  exists Inventory (car_id int primary key, make varchar(50) not null, model varchar(50) not null, year int not null, cost_price decimal(15, 2) not null, selling_price decimal(15, 2) not null, available_qty int default 0, reserved_qty int default 0, sold_qty int default 0)")
+    crsr.execute("create table if not exists Customers (cust_id int primary key, name varchar(100) not null, phone varchar(15) not null, email varchar(100), address varchar(255))")
+    crsr.execute("create table if not exists Inventory (car_id int primary key, make varchar(50) not null, model varchar(50) not null, year int not null, cost_price decimal(15, 2) not null, selling_price decimal(15, 2) not null, available_qty int default 0, reserved_qty int default 0, sold_qty int default 0)")
     crsr.execute("create table if not exists Staff (emp_id int primary key, name varchar(100) not null, passkey varchar(50), role varchar(20) not null, phone varchar(15) not null, salary decimal(10,2) not null, experience decimal(4, 2) not null)")
     crsr.execute("create table if not exists Transactions (txn_id int primary key, car_id int not null, cust_id int not null, emp_id int not null, sale_price decimal(15,2) not null, net_profit decimal(15,2) not null, status varchar(20) default 'Quote', txn_date date not null, quarter varchar(5) not null)")
     
@@ -83,7 +84,7 @@ def purge():
             crsr.execute("truncate table Inventory")
             crsr.execute("truncate table Staff")
             db.commit()
-            print("Dummy values cleared")
+            print("Table Values Cleared")
             if debug:
                 crsr.execute("show tables")
                 recs = crsr.fetchall()
@@ -622,6 +623,7 @@ while True:
         print("|        [7] Administrator Menu         |")
     print("+---------------------------------------+")
     opt = input("       Enter an option: ").strip()
+
     if opt == '1':
         while True:
             print("[1] Add New Customer")
@@ -642,6 +644,7 @@ while True:
                 break
             else:
                 print("Invalid Option")
+
     elif opt == '2':
         while True:
             print("[1] Add a New Car")
@@ -662,6 +665,7 @@ while True:
                 break
             else:
                 print("Invalid Option")
+
     elif opt == '3':
         while True:
             print("[1] Create a New Quote/Transaction")
@@ -692,3 +696,77 @@ while True:
                 break
             else:
                 print("Invalid Option")
+
+    elif opt == '4':
+        break
+
+    elif opt == '5':
+        if Admin:
+            while True:
+                print("[1] New Staff")
+                print("[2] View all Staff")
+                print("[3] Update Staff Details")
+                print("[4] Delete a Staff Member")
+                print("[5] Back")
+                sub_opt = input("Enter your Choice: ")
+                if sub_opt == '1':
+                    add_new(2)
+                elif sub_opt == '2':
+                    disp(3)
+                elif sub_opt == '3':
+                    edit_record(2)
+                elif sub_opt == '4':
+                    delete_record(2)
+                elif sub_opt == '5':
+                    break
+                else:
+                    print("Invalid Option")
+        else:
+            print("ERROR: Not Enough Permissions")
+
+    elif opt == '6':
+        if Admin:
+            while True:
+                print("[1] Showroom Overview")
+                print("[2] Quarterly Report")
+                print("[3] Staff Performance")
+                print("[4] Customer History")
+                print("[5] Back")
+                sub_opt = input("Enter your Choice: ")
+                if sub_opt == '1':
+                    show_statistics()
+                elif sub_opt == '2':
+                    q_report()
+                elif sub_opt == '3':
+                    emp_stats()
+                elif sub_opt == '4':
+                    cust_history()
+                elif sub_opt == '5':
+                    break
+                else:
+                    print("Invalid Option")
+        else:
+            print("ERROR: Not Enough Permissions")
+            
+    elif opt == '7':
+        if Admin:
+            while True:
+                print("[1] WIPE ALL DATA")
+                print("[2] Insert Dummy Values")
+                print("[3] Repair Tables")
+                print("[4] Back")
+                sub_opt = input("Enter your Choice: ")
+                if sub_opt == '1':
+                    purge()
+                elif sub_opt == '2':
+                    dummies()
+                elif sub_opt == '3':
+                    setup()
+                elif sub_opt == '4':
+                    break
+                else:
+                    print("Invalid Option")
+        else:
+            print("ERROR: Not Enough Permissions")
+    else:
+        print("Invalid Option")
