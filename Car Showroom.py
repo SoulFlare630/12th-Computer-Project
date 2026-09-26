@@ -22,9 +22,9 @@ def setup():
     crsr.execute("create table if not exists Inventory (car_id int primary key, make varchar(50) not null, model varchar(50) not null, year int not null, cost_price decimal(15, 2) not null, selling_price decimal(15, 2) not null, available_qty int default 0, reserved_qty int default 0, sold_qty int default 0)")
     crsr.execute("create table if not exists Staff (emp_id int primary key, name varchar(100) not null, passkey varchar(50), role varchar(20) not null, phone varchar(15) not null, salary decimal(10,2) not null, experience decimal(4, 2) not null)")
     crsr.execute("create table if not exists Transactions (txn_id int primary key, car_id int not null, cust_id int not null, emp_id int not null, sale_price decimal(15,2) not null, net_profit decimal(15,2) not null, status varchar(20) default 'Quote', txn_date date not null, quarter varchar(5) not null)")
+    print("Table Creation/Repair Complete")
     
     if debug:
-        print("Table Setup Complete")
         crsr.execute('desc Customers')
         data = crsr.fetchall()
         for i in data:
@@ -44,14 +44,18 @@ def setup():
 
 
 def dummies():
-    crsr.execute("insert into Customers values (301, 'Naveen Nair', '9847123456', 'naveen.nair@gmail.com', 'Panampilly Nagar, Kochi'), (302, 'Fathima Rafeeq', '9447234567', 'fathima.r@yahoo.com', 'Manacaud, Thiruvananthapuram'), (303, 'Rony Mathew', '9744345678', 'rony.mathew@outlook.com', 'Kanjikuzhy, Kottayam'), (304, 'Aisha Sulaiman', '9895456789', 'aisha.sulaiman@gmail.com', 'Palayam, Kozhikode'), (305, 'Harikrishnan V.', '9496567890', 'hari.krishnan@gmail.com', 'Chembukkav, Thrissur')")
-    crsr.execute("insert into Inventory values (201, 'Toyota', 'Innova Hycross ZX', 2025, 2400000.00, 2750000.00, 3, 1, 2), (202, 'Hyundai', 'Creta SX(O)', 2025, 1500000.00, 1720000.00, 4, 0, 3), (203, 'Mahindra', 'Thar Roxx AX7L', 2026, 1850000.00, 2100000.00, 0, 1, 4), (204, 'Maruti Suzuki', 'Swift ZXi+', 2025, 750000.00, 880000.00, 5, 0, 4), (205, 'Tata', 'Nexon EV Empowered', 2026, 1450000.00, 1680000.00, 2, 0, 1)")
-    crsr.execute("insert into Staff values (101, 'Mathew Thomas', 'admin123', 'Manager', '9846011223', 85000.00, 7.50), (102, 'Mohammed Asif', 'sales123', 'Sales', '9745122334', 38000.00, 3.00), (103, 'Sreekanth Pillai', 'sales456', 'Sales', '9633233445', 42000.00, 4.50), (104, 'Anju Varghese', 'sales789', 'Sales', '9447344556', 32000.00, 1.50)")
-    crsr.execute("insert into Transactions values (401, 201, 301, 102, 2750000.00, 350000.00, 'Finalised', '2026-01-18', 'Q1'), (402, 204, 302, 102, 880000.00, 130000.00, 'Finalised', '2026-04-12', 'Q2'), (403, 202, 301, 103, 1720000.00, 220000.00, 'Finalised', '2026-07-25', 'Q3'), (404, 205, 304, 102, 1680000.00, 230000.00, 'Finalised', '2026-10-05', 'Q4'), (405, 203, 303, 103, 2100000.00, 250000.00, 'Quote', '2026-11-14', 'Q4'), (406, 201, 301, 104, 2750000.00, 350000.00, 'Quote', '2026-12-02', 'Q4')")
-    db.commit()
-    print("Dummy values have been inserted successfully")
-    print("Dummy Admin Name: Mathew Thomas")
-    print("Dummy Admin Password: admin123")
+    try:
+        crsr.execute("insert into Customers values (301, 'Naveen Nair', '9847123456', 'naveen.nair@gmail.com', 'Panampilly Nagar, Kochi'), (302, 'Fathima Rafeeq', '9447234567', 'fathima.r@yahoo.com', 'Manacaud, Thiruvananthapuram'), (303, 'Rony Mathew', '9744345678', 'rony.mathew@outlook.com', 'Kanjikuzhy, Kottayam'), (304, 'Aisha Sulaiman', '9895456789', 'aisha.sulaiman@gmail.com', 'Palayam, Kozhikode'), (305, 'Harikrishnan V.', '9496567890', 'hari.krishnan@gmail.com', 'Chembukkav, Thrissur')")
+        crsr.execute("insert into Inventory values (201, 'Toyota', 'Innova Hycross ZX', 2025, 2400000.00, 2750000.00, 3, 1, 2), (202, 'Hyundai', 'Creta SX(O)', 2025, 1500000.00, 1720000.00, 4, 0, 3), (203, 'Mahindra', 'Thar Roxx AX7L', 2026, 1850000.00, 2100000.00, 0, 1, 4), (204, 'Maruti Suzuki', 'Swift ZXi+', 2025, 750000.00, 880000.00, 5, 0, 4), (205, 'Tata', 'Nexon EV Empowered', 2026, 1450000.00, 1680000.00, 2, 0, 1)")
+        crsr.execute("insert into Staff values (101, 'Mathew Thomas', 'admin123', 'Manager', '9846011223', 85000.00, 7.50), (102, 'Mohammed Asif', 'sales123', 'Sales', '9745122334', 38000.00, 3.00), (103, 'Sreekanth Pillai', 'sales456', 'Sales', '9633233445', 42000.00, 4.50), (104, 'Anju Varghese', 'sales789', 'Sales', '9447344556', 32000.00, 1.50)")
+        crsr.execute("insert into Transactions values (401, 201, 301, 102, 2750000.00, 350000.00, 'Finalised', '2026-01-18', 'Q1'), (402, 204, 302, 102, 880000.00, 130000.00, 'Finalised', '2026-04-12', 'Q2'), (403, 202, 301, 103, 1720000.00, 220000.00, 'Finalised', '2026-07-25', 'Q3'), (404, 205, 304, 102, 1680000.00, 230000.00, 'Finalised', '2026-10-05', 'Q4'), (405, 203, 303, 103, 2100000.00, 250000.00, 'Quote', '2026-11-14', 'Q4'), (406, 201, 301, 104, 2750000.00, 350000.00, 'Quote', '2026-12-02', 'Q4')")
+        db.commit()
+        print("Dummy values have been inserted successfully")
+        print("Dummy Admin Name: Mathew Thomas")
+        print("Dummy Admin Password: admin123")
+    except mysql.connector.Error:
+        print("Unable to add Dummy Values - Primary Key Conflict")
+        db.rollback()
     
     if debug:
         crsr.execute('select * from Customers')
@@ -77,8 +81,9 @@ def dummies():
 
 
 def purge():
-    if Admin:
+    if admin:
         print("WARNING: This operation will erase ALL DATA contained within the database.")
+        print()
         conf = input("To confirm, type 'Yes, do as I say!': ")
         if conf == 'Yes, do as I say!':
             crsr.execute("truncate table Transactions")
@@ -124,7 +129,7 @@ def add_new(n):
             emp_id = int(input("Enter the Employee ID: "))
             name = input("Enter the Name: ")
             passkey = input("Enter the Passkey: ")
-            role = input("Enter the Role: ")
+            role = input("Enter the Role: ").strip().title()
             phone = input("Enter the Phone: ")
             salary = float(input("Enter the Salary: "))
             experience = float(input("Enter the Experience: "))
@@ -280,22 +285,22 @@ def delete_record(n):
 
 
 def auth(name, psky):
-    global emp, Admin
+    global emp, admin
     emp = name.strip()
     crsr.execute("select role from Staff where name = %s and passkey = %s", (name, psky.strip()))
     posn = crsr.fetchone()
     if posn is not None:
         if posn[0] == 'Manager':
             print("Login Successful (Admin Mode)")
-            Admin = True
+            admin = True
             return True
         else:
             print("Login Successful")
-            Admin = False
+            admin = False
             return True
     else:
         print("User Not Found")
-        Admin = False
+        admin = False
         return False
 
 def bill(txn_id):
@@ -335,6 +340,7 @@ def bill(txn_id):
     print("PRICE: ", data[4])
     print("STATUS: ", data[6])
     print("------------------------------------------")
+    print()
     return True
 
 def txn():
@@ -349,8 +355,10 @@ def txn():
         return False
     crsr.execute("select * from Customers")
     recs = crsr.fetchall()
+    print("\n--- Available Customers ---")
     for i in recs:
         print(i)
+    print()
     try:
         cust_id = int(input("Enter the Customer ID: "))
     except:
@@ -362,8 +370,10 @@ def txn():
         return False
     crsr.execute("select * from Inventory")
     recs = crsr.fetchall()
+    print("\n--- Available Inventory ---")
     for i in recs:
         print(i)
+    print()
     try:
         car_id = int(input("Enter the Car ID: "))
     except:
@@ -372,7 +382,7 @@ def txn():
     crsr.execute("select emp_id from Staff where name = %s", (emp,))
     emp_id = crsr.fetchone()
     if emp_id is None:
-        print("Invalid Emloyee ID")
+        print("Invalid Employee ID")
         return False
     emp_id = emp_id[0]
     try:
@@ -425,6 +435,8 @@ def txn():
         db.rollback()
         print("Database Error -", err)
         return False
+    print(f"Transaction Recorded as {status} Successfully")
+    print()
     prnt = input("Print bill? (y/n): ")
     if prnt.lower() == "y":
         status = bill(txn_id)
@@ -448,9 +460,10 @@ def finalise(txn_id):
         db.commit()
     except mysql.connector.Error as err:
         db.rollback()
-        print("Updation failed:", err)
+        print("Update failed:", err)
         return False
     print("Transaction Finalised Successfully")
+    print()
     inv = input("Do you want to print the bill? (y/n): ").lower()
     if inv == 'y':
         status = bill(txn_id)
@@ -467,35 +480,62 @@ def disp(n):
     '''
     if n == 1:
         crsr.execute("select * from Customers")
+        data = crsr.fetchall()
+        if not data:
+            print("No Data in Table")
+            print()
+            return False
+        print()
         print(('Customer ID', 'Name', 'Phone', 'Email', 'Address'))
-        for i in crsr.fetchall():
+        for i in data:
             print(i)
     elif n == 2:
         crsr.execute("select * from Inventory")
+        data = crsr.fetchall()
+        if not data:
+            print("No Data in Table")
+            print()
+            return False
+        print()
         print(('Car ID', 'Make', 'Model', 'Year', 'Cost Price', 'Selling Price', 'Available', 'Reserved', 'Sold'))
-        for i in crsr.fetchall():
+        for i in data:
             print(i)
     elif n == 3:
-        if Admin:
+        if admin:
             crsr.execute("select * from Staff")
+            data = crsr.fetchall()
+            if not data:
+                print("No Data in Table")
+                print()
+                return False
+            print()
             print(('Employee ID', 'Name', 'Passkey', 'Role', 'Phone', 'Salary', 'Experience'))
-            for i in crsr.fetchall():
+            for i in data:
                 print(i)
         else:
             print("Access Denied: Table requires Elevated Privileges to View")
+            print()
             return False
     elif n == 4:
         crsr.execute("select * from Transactions")
+        data = crsr.fetchall()
+        if not data:
+            print("No Data in Table")
+            print()
+            return False
+        print()
         print(('Txn ID', 'Car ID', 'Cust ID', 'Emp ID', 'Sale Price', 'Net Profit', 'Status', 'Date', 'Quarter'))
-        for i in crsr.fetchall():
+        for i in data:
             print(i)
     else:
         print("Invalid Option")
+        print()
         return False
+    print()
     return True
 
 def q_report():
-    if Admin:
+    if admin:
         crsr.execute("select quarter, count(txn_id), sum(sale_price), sum(net_profit), avg(net_profit) from Transactions where status = 'Finalised' group by quarter order by quarter")
         data = crsr.fetchall()
         if data == []:
@@ -508,13 +548,14 @@ def q_report():
             tsales += i[2]
             tprofit += i[3]
         print(('TOTAL', '       ', tsales, tprofit, '             '))
+        print()
         return True
     else:
         print("This function requires elevated privileges.")
         return False
 
 def emp_stats():
-    if Admin:
+    if admin:
         crsr.execute("select Staff.emp_id, Staff.name, Staff.experience, count(Transactions.txn_id), sum(Transactions.net_profit) from Staff, Transactions where Staff.emp_id = Transactions.emp_id and Transactions.status = 'Finalised' group by Staff.name, Staff.experience, Staff.emp_id order by count(Transactions.txn_id) desc")
         data = crsr.fetchall()
         if data == []:
@@ -524,6 +565,7 @@ def emp_stats():
         print(('ID', 'Name', 'Experience', 'Sold', 'Total Profits'))
         for i in data:
             print(i)
+        print()
         return True
     else:
         print("This function requires elevated privileges.")
@@ -574,7 +616,7 @@ def show_statistics():
         inventory_value = crsr.fetchone()[0]
         if inventory_value == None:
             inventory_value = 0
-        print("Total Inventory Value (Cost): $", inventory_value)
+        print("Total Inventory Value (Cost): ₹" + str(inventory_value))
         
         crsr.execute("SELECT COUNT(cust_id) FROM Customers")
         total_customers = crsr.fetchone()[0]
@@ -598,11 +640,12 @@ def show_statistics():
 #MAIN PROGRAM
 
 while True:
-    if dbconnect(input("Enter your MySQL Username: "), input("Enter you MySQL Password: ")):
+    if dbconnect(input("Enter your MySQL Username: "), input("Enter your MySQL Password: ")):
         print("Database Connection Successful")
         break
     else:
         print("Database Connection Failed")
+    print()
 
 setup()
 opt = input("Do you want to add dummy values into the database for testing? (y/n): ")
@@ -610,7 +653,7 @@ if opt.lower() == 'y':
     dummies()
 else:
     print("Dummy values can be added later if you change your mind.")
-    
+print()
 crsr.execute("select count(*) from Staff where Role = 'Manager'")
 data = crsr.fetchone()
 if data[0] == 0:
@@ -621,28 +664,33 @@ if data[0] == 0:
             crsr.execute("select count(*) from Staff where Role = 'Manager'")
             data = crsr.fetchone()
             if data[0] != 0:
+                print()
                 break
 
 while True:
     if auth(input("Enter your Name: "), input("Enter your Passkey: ")):
+        print()
         break
+    print()
 
 while True:
+    print()
     print("==========CAR SHOWROOM DATABASE==========")
     print("|        PLEASE SELECT AN OPTION        |")
     print("|        [1] Customer Details           |")
     print("|        [2] Inventory Management       |")
     print("|        [3] Transactions               |")
     print("|        [4] Exit                       |")
-    if Admin:
+    if admin:
         print("|        [5] Staff Details              |")
         print("|        [6] Statistics                 |")
         print("|        [7] Administrator Menu         |")
     print("+---------------------------------------+")
-    opt = input("       Enter an option: ").strip()
+    opt = input("       Select an option: ").strip()
 
     if opt == '1':
         while True:
+            print()
             print("[1] Add New Customer")
             print("[2] View All Customers")
             print("[3] Update Customer Details")
@@ -664,6 +712,7 @@ while True:
 
     elif opt == '2':
         while True:
+            print()
             print("[1] Add a New Car")
             print("[2] View Inventory")
             print("[3] Update Car Details")
@@ -685,13 +734,14 @@ while True:
 
     elif opt == '3':
         while True:
+            print()
             print("[1] Create a New Quote/Transaction")
             print("[2] Finalise a Quote")
             print("[3] Cancel a Reservation")
             print("[4] View/Reprint an Invoice")
             print("[5] Show All Transactions")
             print("[6] Back")
-            sub_opt = input("Enter your choice: ")
+            sub_opt = input('Select an Option: ').strip()
             if sub_opt == '1':
                 txn()
             elif sub_opt == '2':
@@ -714,17 +764,19 @@ while True:
                 print("Invalid Option")
 
     elif opt == '4':
+        print("Goodbye.")
         break
 
     elif opt == '5':
-        if Admin:
+        if admin:
             while True:
+                print()
                 print("[1] New Staff")
                 print("[2] View all Staff")
                 print("[3] Update Staff Details")
                 print("[4] Delete a Staff Member")
                 print("[5] Back")
-                sub_opt = input("Enter your Choice: ")
+                sub_opt = input('Select an Option: ').strip()
                 if sub_opt == '1':
                     add_new(2)
                 elif sub_opt == '2':
@@ -741,14 +793,15 @@ while True:
             print("ERROR: Not Enough Permissions")
 
     elif opt == '6':
-        if Admin:
+        if admin:
             while True:
+                print()
                 print("[1] Showroom Overview")
                 print("[2] Quarterly Report")
                 print("[3] Staff Performance")
                 print("[4] Customer History")
                 print("[5] Back")
-                sub_opt = input("Enter your Choice: ")
+                sub_opt = input('Select an Option: ').strip()
                 if sub_opt == '1':
                     show_statistics()
                 elif sub_opt == '2':
@@ -765,13 +818,14 @@ while True:
             print("ERROR: Not Enough Permissions")
             
     elif opt == '7':
-        if Admin:
+        if admin:
             while True:
+                print()
                 print("[1] WIPE ALL DATA")
                 print("[2] Insert Dummy Values")
                 print("[3] Repair Tables")
                 print("[4] Back")
-                sub_opt = input("Enter your Choice: ")
+                sub_opt = input('Select an Option: ').strip()
                 if sub_opt == '1':
                     purge()
                 elif sub_opt == '2':
