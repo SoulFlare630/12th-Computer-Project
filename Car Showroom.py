@@ -158,6 +158,10 @@ def edit_record(n):
         print("Failed: Invalid Option Selected.")
         return False
 
+    display_option = {1: 2, 2: 3, 3: 1}[n]
+    if not disp(display_option):
+        return False
+
     table, id_column, allowed_columns, record_name = tables[n]
     try:
         record_id = int(input("Enter " + record_name + " ID to edit: "))
