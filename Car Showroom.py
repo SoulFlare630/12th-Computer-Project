@@ -3,6 +3,7 @@ Made by:
 Joel Ephrem Cebin
 Adhinath V. K.
 Alan Anil'''
+import math
 import mysql.connector
 
 def dbconnect(usr, passwd):
@@ -494,16 +495,7 @@ def disp(n):
             print("No Data in Table")
             print()
             return False
-        print("========== CUSTOMER DETAILS ==========")
-        print("--------------------------------------")
-        for i in data:
-            print("Customer ID:", i[0])
-            print("Name:", i[1])
-            print("Phone:", i[2])
-            print("Email:", i[3])
-            print("Address:", i[4])
-            print("--------------------------------------")
-        print("======================================")
+        print_table(('Customer ID', 'Name', 'Phone', 'Email', 'Address'), data)
         return True
     elif n == 2:
         crsr.execute("select * from Inventory")
@@ -512,20 +504,10 @@ def disp(n):
             print("No Data in Table")
             print()
             return False
-        print("========== INVENTORY ==========")
-        print("-------------------------------")
-        for i in data:
-            print("Car ID:", i[0])
-            print("Make:", i[1])
-            print("Model:", i[2])
-            print("Year:", i[3])
-            print("Cost Price:", i[4])
-            print("Selling Price:", i[5])
-            print("Available:", i[6])
-            print("Reserved:", i[7])
-            print("Sold:", i[8])
-            print("-------------------------------")
-        print("===============================")
+        print_table(
+            ('Car ID', 'Make', 'Model', 'Year', 'Cost Price', 'Selling Price', 'Available', 'Reserved', 'Sold'),
+            data,
+        )
         return True
     elif n == 3:
         if admin:
@@ -534,18 +516,7 @@ def disp(n):
             if not data:
                 print("No Data in Table")
                 return False
-            print("========== EMPLOYEE DETAILS ==========")
-            print("--------------------------------------")
-            for i in data:
-                print("Employee ID:", i[0])
-                print("Name:", i[1])
-                print("Passkey:", i[2])
-                print("Role:", i[3])
-                print("Phone:", i[4])
-                print("Salary:", i[5])
-                print("Experience:", i[6])
-                print("--------------------------------------")
-            print("======================================")
+            print_table(('Employee ID', 'Name', 'Role', 'Phone', 'Salary', 'Experience'), data)
             return True
         else:
             print("Access Denied: Table requires Elevated Privileges to View")
@@ -557,20 +528,10 @@ def disp(n):
             print("No Data in Table")
             print()
             return False
-        print("========== TRANSACTIONS ==========")
-        print("----------------------------------")
-        for i in data:
-            print("Txn ID:", i[0])
-            print("Car ID:", i[1])
-            print("Cust ID:", i[2])
-            print("Emp ID:", i[3])
-            print("Sale Price:", i[4])
-            print("Net Profit:", i[5])
-            print("Status:", i[6])
-            print("Date:", i[7])
-            print("Quarter:", i[8])
-            print("----------------------------------")
-        print("==================================")
+        print_table(
+            ('Txn ID', 'Car ID', 'Cust ID', 'Emp ID', 'Sale Price', 'Net Profit', 'Status', 'Date', 'Quarter'),
+            data,
+        )
         return True
     else:
         print("Invalid Option")
