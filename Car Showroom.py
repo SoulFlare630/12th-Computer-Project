@@ -68,12 +68,21 @@ def add_new(n):
     try:
         if n == 1:
             car_id = int(input("Enter Car ID: "))
-            make = input("Enter Make: ")
-            model = input("Enter Model: ")
+            if car_id <= 0:
+                print("Failed: Car ID must be positive.")
+                return False
+            make = input("Enter Make: ").strip()
+            model = input("Enter Model: ").strip()
             year = int(input("Enter Year: "))
             cost_price = float(input("Enter the Cost Price: "))
             selling_price = float(input("Enter the Selling Price: "))
             available_qty = int(input("Enter the Available Quantity: "))
+            if not make or not model or year <= 0 or available_qty < 0:
+                print("Failed: Enter a make, model, positive year, and non-negative quantity.")
+                return False
+            if not math.isfinite(cost_price) or not math.isfinite(selling_price) or cost_price < 0 or selling_price <= 0:
+                print("Failed: Prices must be finite; cost cannot be negative and selling price must be positive.")
+                return False
             crsr.execute("INSERT INTO Inventory (car_id, make, model, year, cost_price, selling_price, available_qty) VALUES (%s,%s,%s,%s,%s,%s,%s)", (car_id, make, model, year, cost_price, selling_price, available_qty))
             db.commit()
             print("Car added successfully.")
@@ -81,12 +90,21 @@ def add_new(n):
             
         elif n == 2:
             emp_id = int(input("Enter the Employee ID: "))
-            name = input("Enter the Name: ")
+            if emp_id <= 0:
+                print("Failed: Employee ID must be positive.")
+                return False
+            name = input("Enter the Name: ").strip()
             passkey = input("Enter the Passkey: ")
             role = input("Enter the Role: ").strip().title()
             phone = input("Enter the Phone: ")
             salary = float(input("Enter the Salary: "))
             experience = float(input("Enter the Experience: "))
+            if not name or not phone or role not in ("Manager", "Sales"):
+                print("Failed: Enter a name, phone, and a valid role (Manager or Sales).")
+                return False
+            if not math.isfinite(salary) or not math.isfinite(experience) or salary < 0 or experience < 0:
+                print("Failed: Salary and experience must be finite, non-negative values.")
+                return False
             crsr.execute("INSERT INTO Staff (emp_id, name, passkey, role, phone, salary, experience) VALUES (%s,%s,%s,%s,%s,%s,%s)", (emp_id, name, passkey, role, phone, salary, experience))
             db.commit()
             print("Employee added successfully.")
@@ -94,10 +112,16 @@ def add_new(n):
             
         elif n == 3:
             cust_id = int(input("Enter the Customer ID: "))
-            name = input("Enter the Name: ")
-            phone = input("Enter the Phone: ")
+            if cust_id <= 0:
+                print("Failed: Customer ID must be positive.")
+                return False
+            name = input("Enter the Name: ").strip()
+            phone = input("Enter the Phone: ").strip()
             email = input("Enter the Email: ")
             address = input("Enter the Address: ")
+            if not name or not phone:
+                print("Failed: Customer name and phone are required.")
+                return False
             crsr.execute("INSERT INTO Customers (cust_id, name, phone, email, address) VALUES (%s,%s,%s,%s,%s)", (cust_id, name, phone, email, address))
             db.commit()
             print("Customer added successfully.")
@@ -465,16 +489,19 @@ def finalise(txn_id):
             print("Bill Printing Failed")
     return True
 
-def print_table(headers, rows):
+def print_table(title, headers, rows):
     rows = [[str(value) for value in row] for row in rows]
     widths = [
         max(len(str(header)), max((len(row[index]) for row in rows), default=0))
         for index, header in enumerate(headers)
     ]
+    table_width = sum(widths) + 3 * (len(widths) - 1)
 
     def print_row(row):
         print(" | ".join(value.ljust(widths[index]) for index, value in enumerate(row)))
 
+    print(title.center(table_width))
+    print("=" * table_width)
     print_row([str(header) for header in headers])
     print("-+-".join("-" * width for width in widths))
     for row in rows:
@@ -495,7 +522,7 @@ def disp(n):
             print("No Data in Table")
             print()
             return False
-        print_table(('Customer ID', 'Name', 'Phone', 'Email', 'Address'), data)
+        print_table("CUSTOMERS", ('Customer ID', 'Name', 'Phone', 'Email', 'Address'), data)
         return True
     elif n == 2:
         crsr.execute("select * from Inventory")
@@ -505,6 +532,7 @@ def disp(n):
             print()
             return False
         print_table(
+            "INVENTORY",
             ('Car ID', 'Make', 'Model', 'Year', 'Cost Price', 'Selling Price', 'Available', 'Reserved', 'Sold'),
             data,
         )
@@ -516,7 +544,7 @@ def disp(n):
             if not data:
                 print("No Data in Table")
                 return False
-            print_table(('Employee ID', 'Name', 'Role', 'Phone', 'Salary', 'Experience'), data)
+            print_table("STAFF", ('Employee ID', 'Name', 'Role', 'Phone', 'Salary', 'Experience'), data)
             return True
         else:
             print("Access Denied: Table requires Elevated Privileges to View")
@@ -551,6 +579,7 @@ def disp(n):
                 row[9],
             ))
         print_table(
+            "TRANSACTIONS",
             ('Txn ID', 'Car', 'Customer', 'Employee', 'Sale Price', 'Net Profit', 'Status', 'Date', 'Quarter'),
             display_data,
         )
