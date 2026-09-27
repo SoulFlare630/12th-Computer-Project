@@ -28,6 +28,10 @@ python -m pip install mysql-connector-python
 4. Choose whether to insert the optional sample data.
 5. Log in with a staff name and passkey. If no Manager exists, the program asks you to create one before login.
 
+## Program Entry and Cleanup
+
+The interactive workflow runs through `main()` when the script is launched directly. Importing the Python file does not start the prompts or connect to MySQL. When `main()` exits, the program closes the database cursor and connection, including when an error interrupts the workflow.
+
 If sample data was inserted into an empty database, the sample Manager login is:
 
 - Name: `Mathew Thomas`

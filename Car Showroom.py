@@ -6,6 +6,9 @@ Alan Anil'''
 import math
 import mysql.connector
 
+db = None
+crsr = None
+
 def dbconnect(usr, passwd):
     global db, crsr
     try:
@@ -190,6 +193,50 @@ def edit_record(n):
         return False
 
 
+def select_open_quote(prompt):
+    crsr.execute(
+        "select Transactions.txn_id, Transactions.car_id, Inventory.make, Inventory.model, "
+        "Customers.name, Staff.name, Transactions.sale_price, Transactions.txn_date "
+        "from Transactions "
+        "left join Inventory on Transactions.car_id = Inventory.car_id "
+        "left join Customers on Transactions.cust_id = Customers.cust_id "
+        "left join Staff on Transactions.emp_id = Staff.emp_id "
+        "where Transactions.status = 'Quote' order by Transactions.txn_date"
+    )
+    quotes = crsr.fetchall()
+    if not quotes:
+        print("No open quotes available.")
+        return None
+
+    quote_ids = {quote[0] for quote in quotes}
+    quote_rows = []
+    for quote in quotes:
+        car_name = " ".join(part for part in (quote[2], quote[3]) if part) or "Unknown car"
+        quote_rows.append((
+            quote[0],
+            car_name,
+            quote[4] or "Unknown customer",
+            quote[5] or "Unknown employee",
+            quote[6],
+            quote[7],
+        ))
+    print_table(
+        "OPEN QUOTES",
+        ('Quote ID', 'Car', 'Customer', 'Employee', 'Sale Price', 'Date'),
+        quote_rows,
+    )
+
+    try:
+        quote_id = int(input(prompt))
+    except ValueError:
+        print("Invalid Input - Quote ID must be numerical.")
+        return None
+    if quote_id not in quote_ids:
+        print("Quote ID not found in the open quote list.")
+        return None
+    return quote_id
+
+
 def delete_record(n):
     '''
     1 - Inventory
@@ -229,14 +276,18 @@ def delete_record(n):
             return True
 
         elif n == 4:
-            record_id = int(input("Enter the Quote ID to delete: "))
-            crsr.execute("select txn_id, car_id from Transactions where status = 'Quote' and txn_id = %s", (record_id,))
+            record_id = select_open_quote("Enter the Quote ID to cancel: ")
+            if record_id is None:
+                return False
+            crsr.execute(
+                "select car_id from Transactions where status = 'Quote' and txn_id = %s",
+                (record_id,),
+            )
             tup = crsr.fetchone()
             if tup is None:
-                print("No Quotes Found")
+                print("Quote ID not found in the open quote list.")
                 return False
-            txn_id = tup[0]
-            car_id = tup[1]
+            car_id = tup[0]
             crsr.execute("delete from Transactions where txn_id = %s", (record_id,))
             if crsr.rowcount == 0:
                 db.rollback()
@@ -338,14 +389,7 @@ def txn():
         return False
     crsr.execute("select * from Customers")
     recs = crsr.fetchall()
-    print("\n--- Available Customers ---")
-    for i in recs:
-        print("Customer ID: ", i[0])
-        print("Name: ", i[1])
-        print("Phone: ", i[2])
-        print("Email: ", i[3])
-        print("Address: ", i[4])
-        print("---------------------------")
+    print_table("AVAILABLE CUSTOMERS", ('Customer ID', 'Name', 'Phone', 'Email', 'Address'), recs)
     print()
     try:
         cust_id = int(input("Enter the Customer ID: "))
@@ -361,18 +405,11 @@ def txn():
         return False
     crsr.execute("select * from Inventory")
     recs = crsr.fetchall()
-    print("\n--- Available Inventory ---")
-    for i in recs:
-        print("Car ID: ", i[0])
-        print("Make: ", i[1])
-        print("Model: ", i[2])
-        print("Year: ", i[3])
-        print("Cost Price: ", i[4])
-        print("Selling Price: ", i[5])
-        print("Available: ", i[6])
-        print("Reserved: ", i[7])
-        print("Sold: ", i[8])
-        print("---------------------------")
+    print_table(
+        "AVAILABLE INVENTORY",
+        ('Car ID', 'Make', 'Model', 'Year', 'Cost Price', 'Selling Price', 'Available', 'Reserved', 'Sold'),
+        recs,
+    )
     print()
     try:
         car_id = int(input("Enter the Car ID: "))
@@ -707,207 +744,222 @@ def show_statistics():
         print("Failed to retrieve statistics due to a database error:", e)
         return False
         
-#MAIN PROGRAM
+def _run_program():
+    #MAIN PROGRAM
 
-while True:
-    if dbconnect(input("Enter your MySQL Username: "), input("Enter your MySQL Password: ")):
-        print("Database Connection Successful")
-        break
-    else:
-        print("Database Connection Failed")
-    print()
-
-setup()
-opt = input("Do you want to add dummy values into the database for testing? (y/n): ")
-if opt.lower() == 'y':
-    dummies()
-else:
-    print("Dummy values can be added later if you change your mind.")
-print()
-crsr.execute("select count(*) from Staff where Role = 'Manager'")
-data = crsr.fetchone()
-if data[0] == 0:
     while True:
-        print("No Manager Data is Available in the Database.")
-        print("Please add a Manager account to continue")
-        if add_new(2):
-            crsr.execute("select count(*) from Staff where Role = 'Manager'")
-            data = crsr.fetchone()
-            if data[0] != 0:
-                print()
-                break
-
-while True:
-    if auth(input("Enter your Name: "), input("Enter your Passkey: ")):
+        if dbconnect(input("Enter your MySQL Username: "), input("Enter your MySQL Password: ")):
+            print("Database Connection Successful")
+            break
+        else:
+            print("Database Connection Failed")
         print()
-        break
-    print()
 
-while True:
-    print()
-    print("==========CAR SHOWROOM DATABASE==========")
-    print("|        PLEASE SELECT AN OPTION        |")
-    print("|        [1] Customer Details           |")
-    print("|        [2] Inventory Management       |")
-    print("|        [3] Transactions               |")
-    print("|        [4] Exit                       |")
-    if admin:
-        print("|        [5] Staff Details              |")
-        print("|        [6] Statistics                 |")
-        print("|        [7] Administrator Menu         |")
-    print("+---------------------------------------+")
-    opt = input("       Select an option: ").strip()
-
-    if opt == '1':
-        while True:
-            print()
-            print("[1] Add New Customer")
-            print("[2] View All Customers")
-            print("[3] Update Customer Details")
-            print("[4] Delete Customer Details")
-            print("[5] Back")
-            sub_opt = input('Select an Option: ').strip()
-            if sub_opt == '1':
-                add_new(3)
-            elif sub_opt == '2':
-                disp(1)
-            elif sub_opt == '3':
-                edit_record(3)
-            elif sub_opt == '4':
-                delete_record(3)
-            elif sub_opt == '5':
-                break
-            else:
-                print("Invalid Option")
-
-    elif opt == '2':
-        while True:
-            print()
-            print("[1] Add a New Car")
-            print("[2] View Inventory")
-            print("[3] Update Car Details")
-            print("[4] Delete a Car")
-            print("[5] Back")
-            sub_opt = input('Select an Option: ').strip()
-            if sub_opt == '1':
-                add_new(1)
-            elif sub_opt == '2':
-                disp(2)
-            elif sub_opt == '3':
-                edit_record(1)
-            elif sub_opt == '4':
-                delete_record(1)
-            elif sub_opt == '5':
-                break
-            else:
-                print("Invalid Option")
-
-    elif opt == '3':
-        while True:
-            print()
-            print("[1] Create a New Quote/Transaction")
-            print("[2] Finalise a Quote")
-            print("[3] Cancel a Reservation")
-            print("[4] View/Reprint an Invoice")
-            print("[5] Show All Transactions")
-            print("[6] Back")
-            sub_opt = input('Select an Option: ').strip()
-            if sub_opt == '1':
-                txn()
-            elif sub_opt == '2':
-                try:
-                    finalise(int(input("Enter the Transaction ID: ")))
-                except ValueError:
-                    print("ERROR: Transaction ID must be Numerical")
-            elif sub_opt == '3':
-                delete_record(4)
-            elif sub_opt == '4':
-                try:
-                    bill(int(input("Enter the Transaction ID: ")))
-                except ValueError:
-                    print("ERROR: Transaction ID must be Numerical")
-            elif sub_opt == '5':
-                disp(4)
-            elif sub_opt == '6':
-                break
-            else:
-                print("Invalid Option")
-
-    elif opt == '4':
-        print()
-        print("Goodbye.")
-        break
-
-    elif opt == '5':
-        if admin:
-            while True:
-                print()
-                print("[1] New Staff")
-                print("[2] View all Staff")
-                print("[3] Update Staff Details")
-                print("[4] Delete a Staff Member")
-                print("[5] Back")
-                sub_opt = input('Select an Option: ').strip()
-                if sub_opt == '1':
-                    add_new(2)
-                elif sub_opt == '2':
-                    disp(3)
-                elif sub_opt == '3':
-                    edit_record(2)
-                elif sub_opt == '4':
-                    delete_record(2)
-                elif sub_opt == '5':
-                    break
-                else:
-                    print("Invalid Option")
-        else:
-            print("ERROR: Not Enough Permissions")
-
-    elif opt == '6':
-        if admin:
-            while True:
-                print()
-                print("[1] Showroom Overview")
-                print("[2] Quarterly Report")
-                print("[3] Staff Performance")
-                print("[4] Customer History")
-                print("[5] Back")
-                sub_opt = input('Select an Option: ').strip()
-                if sub_opt == '1':
-                    show_statistics()
-                elif sub_opt == '2':
-                    q_report()
-                elif sub_opt == '3':
-                    emp_stats()
-                elif sub_opt == '4':
-                    cust_history()
-                elif sub_opt == '5':
-                    break
-                else:
-                    print("Invalid Option")
-        else:
-            print("ERROR: Not Enough Permissions")
-            
-    elif opt == '7':
-        if admin:
-            while True:
-                print()
-                print("[1] WIPE ALL DATA")
-                print("[2] Insert Dummy Values")
-                print("[3] Repair Tables")
-                print("[4] Back")
-                sub_opt = input('Select an Option: ').strip()
-                if sub_opt == '1':
-                    purge()
-                elif sub_opt == '2':
-                    dummies()
-                elif sub_opt == '3':
-                    setup()
-                elif sub_opt == '4':
-                    break
-                else:
-                    print("Invalid Option")
-        else:
-            print("ERROR: Not Enough Permissions")
+    setup()
+    opt = input("Do you want to add dummy values into the database for testing? (y/n): ")
+    if opt.lower() == 'y':
+        dummies()
     else:
-        print("Invalid Option")
+        print("Dummy values can be added later if you change your mind.")
+    print()
+    crsr.execute("select count(*) from Staff where Role = 'Manager'")
+    data = crsr.fetchone()
+    if data[0] == 0:
+        while True:
+            print("No Manager Data is Available in the Database.")
+            print("Please add a Manager account to continue")
+            if add_new(2):
+                crsr.execute("select count(*) from Staff where Role = 'Manager'")
+                data = crsr.fetchone()
+                if data[0] != 0:
+                    print()
+                    break
+
+    while True:
+        if auth(input("Enter your Name: "), input("Enter your Passkey: ")):
+            print()
+            break
+        print()
+
+    while True:
+        print()
+        print("==========CAR SHOWROOM DATABASE==========")
+        print("|        PLEASE SELECT AN OPTION        |")
+        print("|        [1] Customer Details           |")
+        print("|        [2] Inventory Management       |")
+        print("|        [3] Transactions               |")
+        print("|        [4] Exit                       |")
+        if admin:
+            print("|        [5] Staff Details              |")
+            print("|        [6] Statistics                 |")
+            print("|        [7] Administrator Menu         |")
+        print("+---------------------------------------+")
+        opt = input("       Select an option: ").strip()
+
+        if opt == '1':
+            while True:
+                print()
+                print("[1] Add New Customer")
+                print("[2] View All Customers")
+                print("[3] Update Customer Details")
+                print("[4] Delete Customer Details")
+                print("[5] Back")
+                sub_opt = input('Select an Option: ').strip()
+                if sub_opt == '1':
+                    add_new(3)
+                elif sub_opt == '2':
+                    disp(1)
+                elif sub_opt == '3':
+                    edit_record(3)
+                elif sub_opt == '4':
+                    delete_record(3)
+                elif sub_opt == '5':
+                    break
+                else:
+                    print("Invalid Option")
+
+        elif opt == '2':
+            while True:
+                print()
+                print("[1] Add a New Car")
+                print("[2] View Inventory")
+                print("[3] Update Car Details")
+                print("[4] Delete a Car")
+                print("[5] Back")
+                sub_opt = input('Select an Option: ').strip()
+                if sub_opt == '1':
+                    add_new(1)
+                elif sub_opt == '2':
+                    disp(2)
+                elif sub_opt == '3':
+                    edit_record(1)
+                elif sub_opt == '4':
+                    delete_record(1)
+                elif sub_opt == '5':
+                    break
+                else:
+                    print("Invalid Option")
+
+        elif opt == '3':
+            while True:
+                print()
+                print("[1] Create a New Quote/Transaction")
+                print("[2] Finalise a Quote")
+                print("[3] Cancel a Reservation")
+                print("[4] View/Reprint an Invoice")
+                print("[5] Show All Transactions")
+                print("[6] Back")
+                sub_opt = input('Select an Option: ').strip()
+                if sub_opt == '1':
+                    txn()
+                elif sub_opt == '2':
+                    quote_id = select_open_quote("Enter the Quote ID to finalise: ")
+                    if quote_id is not None:
+                        finalise(quote_id)
+                elif sub_opt == '3':
+                    delete_record(4)
+                elif sub_opt == '4':
+                    try:
+                        bill(int(input("Enter the Transaction ID: ")))
+                    except ValueError:
+                        print("ERROR: Transaction ID must be Numerical")
+                elif sub_opt == '5':
+                    disp(4)
+                elif sub_opt == '6':
+                    break
+                else:
+                    print("Invalid Option")
+
+        elif opt == '4':
+            print()
+            print("Goodbye.")
+            break
+
+        elif opt == '5':
+            if admin:
+                while True:
+                    print()
+                    print("[1] New Staff")
+                    print("[2] View all Staff")
+                    print("[3] Update Staff Details")
+                    print("[4] Delete a Staff Member")
+                    print("[5] Back")
+                    sub_opt = input('Select an Option: ').strip()
+                    if sub_opt == '1':
+                        add_new(2)
+                    elif sub_opt == '2':
+                        disp(3)
+                    elif sub_opt == '3':
+                        edit_record(2)
+                    elif sub_opt == '4':
+                        delete_record(2)
+                    elif sub_opt == '5':
+                        break
+                    else:
+                        print("Invalid Option")
+            else:
+                print("ERROR: Not Enough Permissions")
+
+        elif opt == '6':
+            if admin:
+                while True:
+                    print()
+                    print("[1] Showroom Overview")
+                    print("[2] Quarterly Report")
+                    print("[3] Staff Performance")
+                    print("[4] Customer History")
+                    print("[5] Back")
+                    sub_opt = input('Select an Option: ').strip()
+                    if sub_opt == '1':
+                        show_statistics()
+                    elif sub_opt == '2':
+                        q_report()
+                    elif sub_opt == '3':
+                        emp_stats()
+                    elif sub_opt == '4':
+                        cust_history()
+                    elif sub_opt == '5':
+                        break
+                    else:
+                        print("Invalid Option")
+            else:
+                print("ERROR: Not Enough Permissions")
+                
+        elif opt == '7':
+            if admin:
+                while True:
+                    print()
+                    print("[1] WIPE ALL DATA")
+                    print("[2] Insert Dummy Values")
+                    print("[3] Repair Tables")
+                    print("[4] Back")
+                    sub_opt = input('Select an Option: ').strip()
+                    if sub_opt == '1':
+                        purge()
+                    elif sub_opt == '2':
+                        dummies()
+                    elif sub_opt == '3':
+                        setup()
+                    elif sub_opt == '4':
+                        break
+                    else:
+                        print("Invalid Option")
+            else:
+                print("ERROR: Not Enough Permissions")
+        else:
+            print("Invalid Option")
+
+def main():
+    try:
+        _run_program()
+    finally:
+        try:
+            if crsr is not None:
+                crsr.close()
+        finally:
+            if db is not None:
+                db.close()
+
+
+if __name__ == "__main__":
+    main()
