@@ -498,6 +498,22 @@ def finalise(txn_id):
             print("Bill Printing Failed")
     return True
 
+def print_table(headers, rows):
+    rows = [[str(value) for value in row] for row in rows]
+    widths = [
+        max(len(str(header)), max((len(row[index]) for row in rows), default=0))
+        for index, header in enumerate(headers)
+    ]
+
+    def print_row(row):
+        print(" | ".join(value.ljust(widths[index]) for index, value in enumerate(row)))
+
+    print_row([str(header) for header in headers])
+    print("-+-".join("-" * width for width in widths))
+    for row in rows:
+        print_row(row)
+
+
 def disp(n):
     '''
     1 - Customers
@@ -513,9 +529,7 @@ def disp(n):
             print()
             return False
         print()
-        print(('Customer ID', 'Name', 'Phone', 'Email', 'Address'))
-        for i in data:
-            print(i)
+        print_table(('Customer ID', 'Name', 'Phone', 'Email', 'Address'), data)
     elif n == 2:
         crsr.execute("select * from Inventory")
         data = crsr.fetchall()
@@ -524,9 +538,10 @@ def disp(n):
             print()
             return False
         print()
-        print(('Car ID', 'Make', 'Model', 'Year', 'Cost Price', 'Selling Price', 'Available', 'Reserved', 'Sold'))
-        for i in data:
-            print(i)
+        print_table(
+            ('Car ID', 'Make', 'Model', 'Year', 'Cost Price', 'Selling Price', 'Available', 'Reserved', 'Sold'),
+            data,
+        )
     elif n == 3:
         if admin:
             crsr.execute("select emp_id, name, role, phone, salary, experience from Staff")
@@ -536,9 +551,7 @@ def disp(n):
                 print()
                 return False
             print()
-            print(('Employee ID', 'Name', 'Role', 'Phone', 'Salary', 'Experience'))
-            for i in data:
-                print(i)
+            print_table(('Employee ID', 'Name', 'Role', 'Phone', 'Salary', 'Experience'), data)
         else:
             print("Access Denied: Table requires Elevated Privileges to View")
             print()
@@ -551,9 +564,10 @@ def disp(n):
             print()
             return False
         print()
-        print(('Txn ID', 'Car ID', 'Cust ID', 'Emp ID', 'Sale Price', 'Net Profit', 'Status', 'Date', 'Quarter'))
-        for i in data:
-            print(i)
+        print_table(
+            ('Txn ID', 'Car ID', 'Cust ID', 'Emp ID', 'Sale Price', 'Net Profit', 'Status', 'Date', 'Quarter'),
+            data,
+        )
     else:
         print("Invalid Option")
         print()
