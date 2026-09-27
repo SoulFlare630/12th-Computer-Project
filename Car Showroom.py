@@ -522,15 +522,37 @@ def disp(n):
             print("Access Denied: Table requires Elevated Privileges to View")
             return False
     elif n == 4:
-        crsr.execute("select * from Transactions")
+        crsr.execute(
+            "select Transactions.txn_id, Inventory.make, Inventory.model, Customers.name, Staff.name, "
+            "Transactions.sale_price, Transactions.net_profit, Transactions.status, "
+            "Transactions.txn_date, Transactions.quarter "
+            "from Transactions "
+            "left join Inventory on Transactions.car_id = Inventory.car_id "
+            "left join Customers on Transactions.cust_id = Customers.cust_id "
+            "left join Staff on Transactions.emp_id = Staff.emp_id"
+        )
         data = crsr.fetchall()
         if not data:
             print("No Data in Table")
             print()
             return False
+        display_data = []
+        for row in data:
+            car_name = " ".join(part for part in (row[1], row[2]) if part) or "Unknown car"
+            display_data.append((
+                row[0],
+                car_name,
+                row[3] or "Unknown customer",
+                row[4] or "Unknown employee",
+                row[5],
+                row[6],
+                row[7],
+                row[8],
+                row[9],
+            ))
         print_table(
-            ('Txn ID', 'Car ID', 'Cust ID', 'Emp ID', 'Sale Price', 'Net Profit', 'Status', 'Date', 'Quarter'),
-            data,
+            ('Txn ID', 'Car', 'Customer', 'Employee', 'Sale Price', 'Net Profit', 'Status', 'Date', 'Quarter'),
+            display_data,
         )
         return True
     else:
