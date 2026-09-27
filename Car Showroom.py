@@ -4,6 +4,7 @@ Joel Ephrem Cebin
 Adhinath V. K.
 Alan Anil'''
 debug = False
+import math
 import mysql.connector
 
 def dbconnect(usr, passwd):
@@ -168,46 +169,40 @@ def edit_record(n):
     2 - Staff
     3 - Customers
     '''
+    tables = {
+        1: ("Inventory", "car_id", ("make", "model", "year", "cost_price", "selling_price", "available_qty"), "Car"),
+        2: ("Staff", "emp_id", ("name", "passkey", "role", "phone", "salary", "experience"), "Employee"),
+        3: ("Customers", "cust_id", ("name", "phone", "email", "address"), "Customer"),
+    }
+    if n not in tables:
+        print("Failed: Invalid Option Selected.")
+        return False
+
+    table, id_column, allowed_columns, record_name = tables[n]
     try:
-        if n == 1:
-            record_id = int(input("Enter Car ID to edit: "))
-            col = input("Enter column to update (make, model, year, cost_price, selling_price, available_qty): ")
-            val = input("Enter new value for " + col + ": ")
-            crsr.execute("UPDATE Inventory SET " + col + " = %s WHERE car_id = %s", (val, record_id))
-            if crsr.rowcount == 0:
-                print("Failed: Car ID not found or no changes were made.")
-                return False
-            db.commit()
-            print("Car record updated successfully.")
-            return True
-            
-        elif n == 2:
-            record_id = int(input("Enter Employee ID to edit: "))
-            col = input("Enter column to update (name, passkey, role, phone, salary, experience): ")
-            val = input("Enter new value for " + col + ": ")
-            crsr.execute("UPDATE Staff SET " + col + " = %s WHERE emp_id = %s", (val, record_id))
-            if crsr.rowcount == 0:
-                print("Failed: Employee ID not found or no changes were made.")
-                return False
-            db.commit()
-            print("Employee record updated successfully.")
-            return True
-            
-        elif n == 3:
-            record_id = int(input("Enter Customer ID to edit: "))
-            col = input("Enter column to update (name, phone, email, address): ")
-            val = input("Enter new value for " + col + ": ")
-            crsr.execute("UPDATE Customers SET " + col + " = %s WHERE cust_id = %s", (val, record_id))
-            if crsr.rowcount == 0:
-                print("Failed: Customer ID not found or no changes were made.")
-                return False
-            db.commit()
-            print("Customer record updated successfully.")
-            return True
-            
-        else:
-            print("Failed: Invalid Option Selected.")
+        record_id = int(input("Enter " + record_name + " ID to edit: "))
+        crsr.execute(
+            "SELECT " + id_column + " FROM " + table + " WHERE " + id_column + " = %s",
+            (record_id,),
+        )
+        if crsr.fetchone() is None:
+            print(record_name + " ID not found.")
             return False
+        col = input("Enter column to update (" + ", ".join(allowed_columns) + "): ").strip().lower()
+        if col not in allowed_columns:
+            print("Failed: Invalid column selected.")
+            return False
+        val = input("Enter new value for " + col + ": ")
+        crsr.execute(
+            "UPDATE " + table + " SET " + col + " = %s WHERE " + id_column + " = %s",
+            (val, record_id),
+        )
+        if crsr.rowcount == 0:
+            print("Failed: " + record_name + " ID not found or no changes were made.")
+            return False
+        db.commit()
+        print(record_name + " record updated successfully.")
+        return True
 
     except ValueError:
         print("Failed: Invalid input! Please enter a valid numeric ID.")
@@ -266,7 +261,15 @@ def delete_record(n):
             txn_id = tup[0]
             car_id = tup[1]
             crsr.execute("delete from Transactions where txn_id = %s", (record_id,))
-            crsr.execute("update Inventory set available_qty = available_qty + 1, reserved_qty = reserved_qty - 1 where car_id = %s", (car_id,))
+            if crsr.rowcount == 0:
+                db.rollback()
+                print("Quote was not deleted.")
+                return False
+            crsr.execute("update Inventory set available_qty = available_qty + 1, reserved_qty = reserved_qty - 1 where car_id = %s and reserved_qty > 0", (car_id,))
+            if crsr.rowcount == 0:
+                db.rollback()
+                print("Failed to restore the reserved car quantity.")
+                return False
             db.commit()
             print("Quote Deleted Successfully")
             return True
@@ -346,7 +349,10 @@ def bill(txn_id):
 def txn():
     try:
         txn_id = int(input("Enter a Transaction ID: "))
-    except:
+        if txn_id <= 0:
+            print("Transaction ID must be positive.")
+            return False
+    except ValueError:
         print("Invalid Input")
         return False
     crsr.execute("select txn_id from Transactions where txn_id = %s", (txn_id,))
@@ -361,7 +367,10 @@ def txn():
     print()
     try:
         cust_id = int(input("Enter the Customer ID: "))
-    except:
+        if cust_id <= 0:
+            print("Customer ID must be positive.")
+            return False
+    except ValueError:
         print("Invalid Input")
         return False
     crsr.execute("select cust_id from Customers where cust_id = %s", (cust_id,))
@@ -376,7 +385,10 @@ def txn():
     print()
     try:
         car_id = int(input("Enter the Car ID: "))
-    except:
+        if car_id <= 0:
+            print("Car ID must be positive.")
+            return False
+    except ValueError:
         print("Invalid Input")
         return False
     crsr.execute("select emp_id from Staff where name = %s", (emp,))
@@ -387,7 +399,10 @@ def txn():
     emp_id = emp_id[0]
     try:
         sp = float(input("Enter the Sale Price: "))
-    except:
+        if not math.isfinite(sp) or sp <= 0:
+            print("Sale Price must be a finite value greater than zero.")
+            return False
+    except ValueError:
         print("Invalid Input")
         return False
     crsr.execute("select cost_price, available_qty from Inventory where car_id = %s", (car_id,))
@@ -398,7 +413,7 @@ def txn():
     if cp[1] < 1:
         print("The Entered Product is Out of Stock")
         return False
-    cp = cp[0]
+    cp = float(cp[0])
     netprof = sp - cp
     print("The net profit from this transaction will be", netprof)
     status = input("Enter the Status (Quote/Finalised): ").strip().title()
@@ -425,11 +440,15 @@ def txn():
         print("Invalid Month Value")
         return False
     try:
-        crsr.execute("insert into Transactions values (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (txn_id, car_id, cust_id, emp_id, sp, netprof, status, txn_date, q))
         if status == 'Finalised':
-            crsr.execute("update Inventory set available_qty = available_qty - 1, sold_qty = sold_qty + 1 where car_id = %s", (car_id,))
+            crsr.execute("update Inventory set available_qty = available_qty - 1, sold_qty = sold_qty + 1 where car_id = %s and available_qty > 0", (car_id,))
         elif status == 'Quote':
-            crsr.execute("update Inventory set available_qty = available_qty - 1, reserved_qty = reserved_qty + 1 where car_id = %s", (car_id,))
+            crsr.execute("update Inventory set available_qty = available_qty - 1, reserved_qty = reserved_qty + 1 where car_id = %s and available_qty > 0", (car_id,))
+        if crsr.rowcount == 0:
+            db.rollback()
+            print("The car is no longer available in stock.")
+            return False
+        crsr.execute("insert into Transactions values (%s, %s, %s, %s, %s, %s, %s, %s, %s)", (txn_id, car_id, cust_id, emp_id, sp, netprof, status, txn_date, q))
         db.commit()
     except mysql.connector.Error as err:
         db.rollback()
@@ -450,13 +469,21 @@ def finalise(txn_id):
     if txn is None:
         print("Invalid Transaction ID")
         return False
-    if txn[6] == "Finalised":
-        print("This transaction is already finalised")
+    if txn[6] != "Quote":
+        print("Only quote transactions can be finalised.")
         return False
     car_id = txn[1]
     try:
-        crsr.execute("update Transactions set status = 'Finalised' where txn_id = %s", (txn_id,))
-        crsr.execute("update Inventory set sold_qty = sold_qty + 1, reserved_qty = reserved_qty - 1 where car_id = %s", (car_id,))
+        crsr.execute("update Transactions set status = 'Finalised' where txn_id = %s and status = 'Quote'", (txn_id,))
+        if crsr.rowcount == 0:
+            db.rollback()
+            print("This transaction is no longer an open quote.")
+            return False
+        crsr.execute("update Inventory set sold_qty = sold_qty + 1, reserved_qty = reserved_qty - 1 where car_id = %s and reserved_qty > 0", (car_id,))
+        if crsr.rowcount == 0:
+            db.rollback()
+            print("Failed to find the reserved car quantity.")
+            return False
         db.commit()
     except mysql.connector.Error as err:
         db.rollback()
@@ -502,14 +529,14 @@ def disp(n):
             print(i)
     elif n == 3:
         if admin:
-            crsr.execute("select * from Staff")
+            crsr.execute("select emp_id, name, role, phone, salary, experience from Staff")
             data = crsr.fetchall()
             if not data:
                 print("No Data in Table")
                 print()
                 return False
             print()
-            print(('Employee ID', 'Name', 'Passkey', 'Role', 'Phone', 'Salary', 'Experience'))
+            print(('Employee ID', 'Name', 'Role', 'Phone', 'Salary', 'Experience'))
             for i in data:
                 print(i)
         else:
