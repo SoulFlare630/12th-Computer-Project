@@ -3,8 +3,6 @@ Made by:
 Joel Ephrem Cebin
 Adhinath V. K.
 Alan Anil'''
-debug = False
-import math
 import mysql.connector
 
 def dbconnect(usr, passwd):
@@ -24,24 +22,6 @@ def setup():
     crsr.execute("create table if not exists Staff (emp_id int primary key, name varchar(100) not null, passkey varchar(50), role varchar(20) not null, phone varchar(15) not null, salary decimal(10,2) not null, experience decimal(4, 2) not null)")
     crsr.execute("create table if not exists Transactions (txn_id int primary key, car_id int not null, cust_id int not null, emp_id int not null, sale_price decimal(15,2) not null, net_profit decimal(15,2) not null, status varchar(20) default 'Quote', txn_date date not null, quarter varchar(5) not null)")
     print("Table Creation/Repair Complete")
-    
-    if debug:
-        crsr.execute('desc Customers')
-        data = crsr.fetchall()
-        for i in data:
-            print(i)
-        crsr.execute('desc Inventory')
-        data = crsr.fetchall()
-        for i in data:
-            print(i)
-        crsr.execute('desc Staff')
-        data = crsr.fetchall()
-        for i in data:
-            print(i)
-        crsr.execute('desc Transactions')
-        data = crsr.fetchall()
-        for i in data:
-            print(i)
 
 
 def dummies():
@@ -57,28 +37,6 @@ def dummies():
     except mysql.connector.Error:
         print("Unable to add Dummy Values - Primary Key Conflict")
         db.rollback()
-    
-    if debug:
-        crsr.execute('select * from Customers')
-        recs = crsr.fetchall()
-        for i in recs:
-            print(i)
-        print()
-        crsr.execute('select * from Inventory')
-        recs = crsr.fetchall()
-        for i in recs:
-            print(i)
-        print()
-        crsr.execute('select * from Staff')
-        recs = crsr.fetchall()
-        for i in recs:
-            print(i)
-        print()
-        crsr.execute('select * from Transactions')
-        recs = crsr.fetchall()
-        for i in recs:
-            print(i)
-        print()
 
 
 def purge():
@@ -93,12 +51,6 @@ def purge():
             crsr.execute("truncate table Staff")
             db.commit()
             print("Table Values Cleared")
-            if debug:
-                crsr.execute("show tables")
-                recs = crsr.fetchall()
-                for i in recs:
-                    print(i)
-            return True
         else:
             print("Deletion cancelled")
             return False
@@ -335,13 +287,13 @@ def bill(txn_id):
         print("Employee Name not found")
         return False
     print("===============  INVOICE  ===============")
-    print("DATE: ", date)
-    print("TRANSACTION ID: ", txn_id)
-    print("CAR: ", carname)
-    print("CUSTOMER: ", cust_name)
-    print("EMPLOYEE: ", emp_name)
-    print("PRICE: ", data[4])
-    print("STATUS: ", data[6])
+    print("DATE:", date)
+    print("TRANSACTION ID:", txn_id)
+    print("CAR:", carname)
+    print("CUSTOMER:", cust_name)
+    print("EMPLOYEE:", emp_name)
+    print("PRICE:", data[4])
+    print("STATUS:", data[6])
     print("------------------------------------------")
     print()
     return True
@@ -363,7 +315,12 @@ def txn():
     recs = crsr.fetchall()
     print("\n--- Available Customers ---")
     for i in recs:
-        print(i)
+        print("Customer ID: ", i[0])
+        print("Name: ", i[1])
+        print("Phone: ", i[2])
+        print("Email: ", i[3])
+        print("Address: ", i[4])
+        print("---------------------------")
     print()
     try:
         cust_id = int(input("Enter the Customer ID: "))
@@ -381,7 +338,16 @@ def txn():
     recs = crsr.fetchall()
     print("\n--- Available Inventory ---")
     for i in recs:
-        print(i)
+        print("Car ID: ", i[0])
+        print("Make: ", i[1])
+        print("Model: ", i[2])
+        print("Year: ", i[3])
+        print("Cost Price: ", i[4])
+        print("Selling Price: ", i[5])
+        print("Available: ", i[6])
+        print("Reserved: ", i[7])
+        print("Sold: ", i[8])
+        print("---------------------------")
     print()
     try:
         car_id = int(input("Enter the Car ID: "))
@@ -528,8 +494,17 @@ def disp(n):
             print("No Data in Table")
             print()
             return False
-        print()
-        print_table(('Customer ID', 'Name', 'Phone', 'Email', 'Address'), data)
+        print("========== CUSTOMER DETAILS ==========")
+        print("--------------------------------------")
+        for i in data:
+            print("Customer ID:", i[0])
+            print("Name:", i[1])
+            print("Phone:", i[2])
+            print("Email:", i[3])
+            print("Address:", i[4])
+            print("--------------------------------------")
+        print("======================================")
+        return True
     elif n == 2:
         crsr.execute("select * from Inventory")
         data = crsr.fetchall()
@@ -537,24 +512,43 @@ def disp(n):
             print("No Data in Table")
             print()
             return False
-        print()
-        print_table(
-            ('Car ID', 'Make', 'Model', 'Year', 'Cost Price', 'Selling Price', 'Available', 'Reserved', 'Sold'),
-            data,
-        )
+        print("========== INVENTORY ==========")
+        print("-------------------------------")
+        for i in data:
+            print("Car ID:", i[0])
+            print("Make:", i[1])
+            print("Model:", i[2])
+            print("Year:", i[3])
+            print("Cost Price:", i[4])
+            print("Selling Price:", i[5])
+            print("Available:", i[6])
+            print("Reserved:", i[7])
+            print("Sold:", i[8])
+            print("-------------------------------")
+        print("===============================")
+        return True
     elif n == 3:
         if admin:
             crsr.execute("select emp_id, name, role, phone, salary, experience from Staff")
             data = crsr.fetchall()
             if not data:
                 print("No Data in Table")
-                print()
                 return False
-            print()
-            print_table(('Employee ID', 'Name', 'Role', 'Phone', 'Salary', 'Experience'), data)
+            print("========== EMPLOYEE DETAILS ==========")
+            print("--------------------------------------")
+            for i in data:
+                print("Employee ID:", i[0])
+                print("Name:", i[1])
+                print("Passkey:", i[2])
+                print("Role:", i[3])
+                print("Phone:", i[4])
+                print("Salary:", i[5])
+                print("Experience:", i[6])
+                print("--------------------------------------")
+            print("======================================")
+            return True
         else:
             print("Access Denied: Table requires Elevated Privileges to View")
-            print()
             return False
     elif n == 4:
         crsr.execute("select * from Transactions")
@@ -563,17 +557,24 @@ def disp(n):
             print("No Data in Table")
             print()
             return False
-        print()
-        print_table(
-            ('Txn ID', 'Car ID', 'Cust ID', 'Emp ID', 'Sale Price', 'Net Profit', 'Status', 'Date', 'Quarter'),
-            data,
-        )
+        print("========== TRANSACTIONS ==========")
+        print("----------------------------------")
+        for i in data:
+            print("Txn ID:", i[0])
+            print("Car ID:", i[1])
+            print("Cust ID:", i[2])
+            print("Emp ID:", i[3])
+            print("Sale Price:", i[4])
+            print("Net Profit:", i[5])
+            print("Status:", i[6])
+            print("Date:", i[7])
+            print("Quarter:", i[8])
+            print("----------------------------------")
+        print("==================================")
+        return True
     else:
         print("Invalid Option")
-        print()
         return False
-    print()
-    return True
 
 def q_report():
     if admin:
@@ -582,14 +583,21 @@ def q_report():
         if data == []:
             print("No data to show")
             return False
-        print(('Quarter', 'Transactions', 'Total Sale Price', 'Total Profit', 'Average Profit'))
+        print("========== QUARTERLY REPORT ==========")
+        print("--------------------------------------")
         tsales, tprofit = 0, 0
         for i in data:
-            print(i)
+            print("Quarter:", i[0])
+            print("Transactions:", i[1])
+            print("Total Sale Price:", i[2])
+            print("Total Profit:", i[3])
+            print("Average Profit:", i[4])
+            print("--------------------------------------")
             tsales += i[2]
             tprofit += i[3]
-        print(('TOTAL', '       ', tsales, tprofit, '             '))
-        print()
+        print("Total Sales:", tsales)
+        print("Total Profit:", tprofit)
+        print("======================================")
         return True
     else:
         print("This function requires elevated privileges.")
@@ -602,11 +610,16 @@ def emp_stats():
         if data == []:
             print("No Data Available")
             return False
-        print("==================STAFF SALES REPORT==================")
-        print(('ID', 'Name', 'Experience', 'Sold', 'Total Profits'))
+        print("========== STAFF SALES REPORT ==========")
+        print("----------------------------------------")
         for i in data:
-            print(i)
-        print()
+            print("Employee ID:", i[0])
+            print("Name:", i[1])
+            print("Experience:", i[2])
+            print("Sales:", i[3])
+            print("Total Profit:", i[4])
+            print("----------------------------------------")
+        print("========================================")
         return True
     else:
         print("This function requires elevated privileges.")
@@ -636,11 +649,15 @@ def cust_history():
     if recs == []:
         print("No purchase history found for this customer.")
     else:
-        print(('Txn ID', 'Date', 'Make', 'Model', 'Price', 'Status'))
         for i in recs:
-            print(i)
-            
-    print("======================================\n")
+            print("Txn ID:", i[0])
+            print("Date:", i[1])
+            print("Make:", i[2])
+            print("Model:", i[3])
+            print("Price:", i[4])
+            print("Status:", i[5])
+            print("--------------------------------------")
+    print("======================================")
     return True
 
 def show_statistics():
@@ -805,6 +822,7 @@ while True:
                 print("Invalid Option")
 
     elif opt == '4':
+        print()
         print("Goodbye.")
         break
 
